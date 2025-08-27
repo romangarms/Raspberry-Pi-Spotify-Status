@@ -41,6 +41,8 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = os.urandom(64)
 app.config["SESSION_TYPE"] = "filesystem"
 app.config["SESSION_FILE_DIR"] = "./.flask_session/"
+app.config["SESSION_PERMANENT"] = True
+app.config["PERMANENT_SESSION_LIFETIME"] = 2592000  # 30 days in seconds
 Session(app)
 maxTitleLength = 25
 maxArtistLength = 35
