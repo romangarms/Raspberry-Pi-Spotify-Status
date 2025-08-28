@@ -63,12 +63,15 @@ def index():
         auth_manager.get_access_token(request.args.get("code"))
         return redirect("/")
 
-    if not auth_manager.validate_token(cache_handler.get_cached_token()):
-        # Step 1. Display sign in link when no token
+    # Check if we have a token in the cache
+    token_info = cache_handler.get_cached_token()
+    if not token_info:
+        # Step 1. Display sign in link when no token at all
         auth_url = auth_manager.get_authorize_url()
         return render_template("login.html", auth_url=auth_url)
 
-    # Step 3. Signed in, display currently playing
+    # Step 3. We have a token (expired or not), let Spotipy handle refresh
+    # and go to currently_playing
     return redirect("/currently_playing")
 
 
@@ -81,6 +84,8 @@ def sign_out():
 @app.route("/currently_playing")
 def currently_playing():
     spotify = get_spotify()
+    if not spotify:
+        return redirect("/")
     track = spotify.current_user_playing_track()
     if track is not None:
         title = track["item"]["name"]
@@ -113,6 +118,8 @@ def currently_playing():
 @app.route("/debug")
 def debug():
     spotify = get_spotify()
+    if not spotify:
+        return redirect("/")
     track = spotify.current_user_playing_track()
     duration = track["item"]["duration_ms"]
     progress = track["progress_ms"]
@@ -124,6 +131,8 @@ def debug():
 @app.route("/current_track_xhr")
 def current_track_xhr():
     spotify = get_spotify()
+    if not spotify:
+        return {"error": "Not authenticated"}, 401
     track = spotify.current_user_playing_track()
 
     if track is not None:
@@ -182,6 +191,8 @@ def get_artists(artists_json):
 @app.route("/play")
 def play():
     spotify = get_spotify()
+    if not spotify:
+        return redirect("/")
     spotify.start_playback()
     return "playing"
 
@@ -189,6 +200,8 @@ def play():
 @app.route("/pause")
 def pause():
     spotify = get_spotify()
+    if not spotify:
+        return redirect("/")
     spotify.pause_playback()
     return "pausing"
 
@@ -196,6 +209,8 @@ def pause():
 @app.route("/skip")
 def skip():
     spotify = get_spotify()
+    if not spotify:
+        return redirect("/")
     spotify.next_track()
     return "skipping"
 
@@ -203,6 +218,8 @@ def skip():
 @app.route("/like")
 def like():
     spotify = get_spotify()
+    if not spotify:
+        return redirect("/")
     song_id = request.args.get("id")
     spotify.current_user_saved_tracks_add(tracks=[song_id])
     return "liking"
@@ -211,6 +228,8 @@ def like():
 @app.route("/unlike")
 def unlike():
     spotify = get_spotify()
+    if not spotify:
+        return redirect("/")
     song_id = request.args.get("id")
     spotify.current_user_saved_tracks_delete(tracks=[song_id])
     return "unliking"
@@ -228,9 +247,17 @@ def handle_exception(e):
 
 def get_spotify():
     cache_handler = spotipy.cache_handler.FlaskSessionCacheHandler(session)
-    auth_manager = spotipy.oauth2.SpotifyOAuth(cache_handler=cache_handler)
-    if not auth_manager.validate_token(cache_handler.get_cached_token()):
-        return redirect("/")
+    auth_manager = spotipy.oauth2.SpotifyOAuth(
+        scope="user-read-currently-playing playlist-modify-private user-modify-playback-state user-library-read user-library-modify playlist-modify-private playlist-modify-public",
+        cache_handler=cache_handler,
+        show_dialog=False,
+    )
+    
+    # Check if we have any token at all
+    if not cache_handler.get_cached_token():
+        return None
+    
+    # Let Spotipy handle token refresh automatically
     return spotipy.Spotify(auth_manager=auth_manager)
 
 
