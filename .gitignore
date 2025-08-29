@@ -168,10 +168,6 @@ cython_debug/
 #MacOS
 .DS_Store
 
-#Flask Session
-.flask_session/
-flask_session/
-
 #fly.io
 fly.toml
 .bash_profile

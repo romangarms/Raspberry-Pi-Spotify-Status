@@ -23,13 +23,13 @@ Run app.py
 from http.client import HTTPException
 import os
 from flask import Flask, session, request, redirect, render_template
-from flask_session import Session
 import spotipy
 import json
 import sys
 import re
+from datetime import timedelta
 
-debug = False
+debug = True
 
 if debug:
     # Load environment variables from .env file
@@ -38,12 +38,31 @@ if debug:
     load_dotenv()  # take environment variables from .env.
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = os.urandom(64)
-app.config["SESSION_TYPE"] = "filesystem"
-app.config["SESSION_FILE_DIR"] = "./.flask_session/"
-app.config["SESSION_PERMANENT"] = True
-app.config["PERMANENT_SESSION_LIFETIME"] = 2592000  # 30 days in seconds
-Session(app)
+
+# Use environment variable for Flask secret key
+flask_secret = os.getenv("FLASK_SECRET_KEY")
+if flask_secret:
+    app.config["SECRET_KEY"] = flask_secret
+else:
+    # Production - require environment variable
+    print(f"ERROR: FLASK_SECRET_KEY environment variable not set.")
+    sys.exit("Missing FLASK_SECRET_KEY for production deployment")
+
+# Configure client-side session cookies
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=7)  # Refreshes on each request
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_NAME"] = "spotify_session"
+# Only use secure cookies in production
+if not debug:
+    app.config["SESSION_COOKIE_SECURE"] = True
+
+@app.before_request
+def before_request():
+    """Refresh session on each request to keep it alive"""
+    session.permanent = True
+    # This refreshes the cookie expiration on each request
+    session.modified = True
 maxTitleLength = 25
 maxArtistLength = 35
 maxAlbumLength = 20

@@ -168,6 +168,3 @@ site
 #MacOS
 **/.DS_Store
 
-#Flask Session
-**/.flask_session
-**/flask_session
