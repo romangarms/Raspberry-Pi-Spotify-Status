@@ -12,5 +12,9 @@
     </div>
 </div>
 
+<script>
+    // Pass screen server URL to JavaScript
+    window.SCREEN_SERVER_URL = {{ screen_server_url | tojson }};
+</script>
 <script src="/static/js/not_playing.js"></script>
 {% endblock %}

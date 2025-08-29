@@ -67,6 +67,12 @@ maxTitleLength = 25
 maxArtistLength = 35
 maxAlbumLength = 20
 
+# Screen server configuration (optional)
+SCREEN_SERVER_URL = os.getenv("SCREEN_SERVER_URL")
+if SCREEN_SERVER_URL:
+    print(f"Optional: Screen server configured at: {SCREEN_SERVER_URL}")
+else:
+    print("Optional: No screen server configured.")
 
 @app.route("/")
 def index():
@@ -129,8 +135,9 @@ def currently_playing():
             currently_playing=currently_playing,
             liked=liked,
             json=json.dumps(track, indent=2),
+            screen_server_url=SCREEN_SERVER_URL,
         )
-    return render_template("not_playing.html")
+    return render_template("not_playing.html", screen_server_url=SCREEN_SERVER_URL)
 
 
 # debugging
@@ -285,7 +292,7 @@ def shorten_text(string, length):
 
 
 def format_title(title):
-    title = re.sub("\(feat\. .+\)", "", title)
+    title = re.sub(r"\(feat\. .+\)", "", title)
     if len(title) > maxTitleLength:
         title = shorten_text(title, maxTitleLength)
     return title

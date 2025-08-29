@@ -1,6 +1,10 @@
-var turnOffRequest = new XMLHttpRequest();
-turnOffRequest.open("GET", "http://localhost:9000/TurnOffScreen", true); // false for synchronous request
-turnOffRequest.send(null);
+// Turn off screen when nothing is playing (only if screen server is configured)
+if (window.SCREEN_SERVER_URL) {
+    var turnOffRequest = new XMLHttpRequest();
+    turnOffRequest.open("GET", window.SCREEN_SERVER_URL + "/TurnOffScreen", true);
+    turnOffRequest.onerror = function() { console.log("Screen server not reachable"); };
+    turnOffRequest.send(null);
+}
 
 function reqListener() {
     var parsed = JSON.parse(this.responseText)

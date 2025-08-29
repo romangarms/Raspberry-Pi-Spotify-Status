@@ -27,9 +27,27 @@
             {% endif %}
 
             {% if currently_playing %}
+            {% if screen_server_url %}
+            <script>
+                // Turn on screen when music is playing
+                var turnOnRequest = new XMLHttpRequest();
+                turnOnRequest.open("GET", "{{ screen_server_url }}/TurnOnScreen", true);
+                turnOnRequest.onerror = function() { console.log("Screen server not reachable"); };
+                turnOnRequest.send(null);
+            </script>
+            {% endif %}
             <a onclick="pause()" id="play-pause-button" class="btn btn-default media-control-button"><i
                     class="material-icons">pause</i></a>
             {% else %}
+            {% if screen_server_url %}
+            <script>
+                // Turn off screen when music is paused
+                var turnOffRequest = new XMLHttpRequest();
+                turnOffRequest.open("GET", "{{ screen_server_url }}/TurnOffScreen", true);
+                turnOffRequest.onerror = function() { console.log("Screen server not reachable"); };
+                turnOffRequest.send(null);
+            </script>
+            {% endif %}
             <a onclick="play()" id="play-pause-button" class="btn btn-default media-control-button"><i
                     class="material-icons">play_arrow</i></a>
             {% endif %}
@@ -44,9 +62,10 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js" integrity="sha384-07Ka54GYFmGT6htTx6GjVUECzNkAlI5knfdu+4zu1L+8M8n+BAsvvVfNDaRc8fMi" crossorigin="anonymous"></script>
 
-<!-- save the song ID to a var so that we can read it from the JS file -->
+<!-- save the song ID and screen server URL to vars so that we can read them from the JS file -->
 <script>
     window.SONG_ID = "{{song_id}}";
+    window.SCREEN_SERVER_URL = {{ screen_server_url | tojson }};
 </script>
 <script src="/static/js/currently_playing.js"></script>
 {% endblock %}

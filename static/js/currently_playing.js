@@ -185,9 +185,25 @@ function reqListener() {
         if (parsed["currently_playing"]) {
             playIconElement.textContent = "pause";
             document.getElementById('play-pause-button').onclick = pause;
+            
+            // Turn on screen when music starts playing
+            if (window.SCREEN_SERVER_URL) {
+                var turnOnRequest = new XMLHttpRequest();
+                turnOnRequest.open("GET", window.SCREEN_SERVER_URL + "/TurnOnScreen", true);
+                turnOnRequest.onerror = function() { console.log("Screen server not reachable"); };
+                turnOnRequest.send(null);
+            }
         } else {
             playIconElement.textContent = "play_arrow";
             document.getElementById('play-pause-button').onclick = play;
+            
+            // Turn off screen when music stops
+            if (window.SCREEN_SERVER_URL) {
+                var turnOffRequest = new XMLHttpRequest();
+                turnOffRequest.open("GET", window.SCREEN_SERVER_URL + "/TurnOffScreen", true);
+                turnOffRequest.onerror = function() { console.log("Screen server not reachable"); };
+                turnOffRequest.send(null);
+            }
         }
 
         // Update the like button based on auto refresh
