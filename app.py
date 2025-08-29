@@ -29,7 +29,7 @@ import sys
 import re
 from datetime import timedelta
 
-debug = True
+debug = False
 
 if debug:
     # Load environment variables from .env file
