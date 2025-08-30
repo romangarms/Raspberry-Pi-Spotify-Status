@@ -23,7 +23,7 @@ function compareTrack() {
         const req = new XMLHttpRequest();
         req.addEventListener("load", reqListener);
         req.addEventListener("error", reloadPageListener)
-        req.open("GET", "/current_track_xhr?id={{id}}&currently_playing={{currently_playing}}");
+        req.open("GET", "/current_track_xhr?id=" + window.SONG_ID + "&currently_playing=" + window.CURRENTLY_PLAYING);
         req.send();
     } catch (error) {
         console.log("Unable to reach server");

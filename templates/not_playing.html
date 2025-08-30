@@ -13,7 +13,9 @@
 </div>
 
 <script>
-    // Pass screen server URL to JavaScript
+    // Pass variables to JavaScript
+    window.SONG_ID = "{{song_id}}";
+    window.CURRENTLY_PLAYING = {{currently_playing | tojson}};
     window.SCREEN_SERVER_URL = {{ screen_server_url | tojson }};
 </script>
 <script src="/static/js/not_playing.js"></script>

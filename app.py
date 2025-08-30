@@ -137,7 +137,7 @@ def currently_playing():
             json=json.dumps(track, indent=2),
             screen_server_url=SCREEN_SERVER_URL,
         )
-    return render_template("not_playing.html", screen_server_url=SCREEN_SERVER_URL)
+    return render_template("not_playing.html", screen_server_url=SCREEN_SERVER_URL, song_id="", currently_playing=False)
 
 
 # debugging
