@@ -1,0 +1,111 @@
+/* Album art styles */
+#album-art {
+  width: 100%;
+  box-shadow: 5px 5px 25px 5px rgba(0, 0, 0, 0.5);
+  border-radius: 4px;
+  transition: opacity 0.6s ease-in-out;
+}
+
+/* Text container styles */
+#text-outer {
+  width: 100%;
+  height: 80%;
+  display: table;
+}
+
+#text {
+  clear: both;
+  text-align: left;
+  display: table-cell;
+  max-width: 100%;
+  height: 80%;
+  padding-left: 10%;
+  vertical-align: middle;
+  transition: opacity 0.6s ease-in-out;
+}
+
+/* Typography */
+.title {
+  font-weight: 900;
+  font-size: 7.5vw;
+  margin-bottom: 0.5rem;
+}
+
+.artist {
+  font-weight: 400;
+  font-size: 4.5vw;
+  margin-bottom: 0.5rem;
+}
+
+.album {
+  font-weight: 400;
+  opacity: 0.75;
+  font-size: 4.5vw;
+}
+
+/* Media controls */
+#buttons {
+  float: left;
+  clear: both;
+  width: 100%;
+  height: 20%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.media-control-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 1rem;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.media-control-button:hover {
+  transform: scale(1.1);
+  opacity: 0.8;
+}
+
+.media-control-button:active {
+  transform: scale(0.95);
+}
+
+.material-icons {
+  font-size: 5vw;
+}
+
+/* Progress bar */
+#progress-bar {
+  position: absolute;
+  bottom: 0px;
+  top: 97%;
+  width: 100%;
+  height: 3%;
+  transition: background-color 0.3s ease;
+}
+
+#progress-bar-inner {
+  width: 0%;
+  height: 100%;
+  /* Transition is now handled dynamically in the component */
+}
+
+/* Fade transition classes */
+.fade-in {
+  opacity: 1;
+}
+
+.fade-out {
+  opacity: 0;
+}
+
+/* Optional: Add a subtle scale effect for album art */
+#album-art.fade-out {
+  transform: scale(0.95);
+}
+
+#album-art.fade-in {
+  transform: scale(1);
+  transition: opacity 0.6s ease-in-out, transform 0.6s ease-in-out;
+}

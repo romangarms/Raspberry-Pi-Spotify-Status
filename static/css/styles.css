@@ -1,9 +1,28 @@
-/* Layout Containers */
-html, body {
-    max-width: 100%;
-    overflow: hidden; /* Hide scrollbars */
+/* =============================================================================
+   UNIFIED DESIGN SYSTEM - Spotify Status App
+   Minimal, monochrome design with subtle interactions
+   ============================================================================= */
+
+/* =============================================================================
+   BASE & RESET
+   ============================================================================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
+html, body {
+    max-width: 100%;
+    overflow: hidden;
+    font-family: "Source Sans Pro", Helvetica, Arial, sans-serif;
+    background-color: #fff;
+    color: #333;
+}
+
+/* =============================================================================
+   LAYOUT CONTAINERS
+   ============================================================================= */
 #outer {
     width: 100%;
     display: flex;
@@ -26,7 +45,216 @@ html, body {
     flex-grow: 1;
 }
 
-/* Content Containers */
+.page-container {
+    text-align: center;
+    font-family: "Source Sans Pro", Helvetica, Arial, sans-serif;
+    padding: 20px;
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh;
+}
+
+/* =============================================================================
+   UNIFIED BUTTON STYLES
+   ============================================================================= */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 18px 36px;
+    font-size: 3.5vw;
+    font-weight: 600;
+    text-decoration: none;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 180px;
+    font-family: "Source Sans Pro", Helvetica, Arial, sans-serif;
+}
+
+.btn-primary {
+    background-color: #333;
+    color: white;
+    border-color: #333;
+}
+
+.btn-primary:hover {
+    background-color: #555;
+    border-color: #555;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-secondary {
+    background-color: #fff;
+    color: #333;
+    border-color: #ddd;
+}
+
+.btn-secondary:hover {
+    background-color: #f8f8f8;
+    border-color: #999;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.btn-large {
+    padding: 24px 48px;
+    font-size: 4vw;
+    min-width: 220px;
+}
+
+.btn .material-icons {
+    font-size: 4vw !important;
+}
+
+/* =============================================================================
+   TYPOGRAPHY
+   ============================================================================= */
+.page-title {
+    font-weight: 900;
+    font-size: 7vw;
+    margin-bottom: 1.5rem;
+    color: #333;
+}
+
+.page-subtitle {
+    font-size: 3vw;
+    color: #666;
+    margin-bottom: 2rem;
+    line-height: 1.5;
+}
+
+.title {
+    font-weight: 900;
+    font-size: 7.5vw;
+}
+
+.artist {
+    font-weight: 400;
+    font-size: 4.5vw;
+}
+
+.album {
+    font-weight: 400;
+    opacity: 0.75;
+    font-size: 4.5vw;
+}
+
+.not-playing {
+    font-weight: 900;
+    font-size: 10.5vw;
+}
+
+/* =============================================================================
+   ICONS
+   ============================================================================= */
+.material-icons {
+    font-size: 5vw;
+}
+
+.icon-large {
+    font-size: 10vw !important;
+    color: #999;
+    opacity: 0.5;
+    margin-bottom: 1.5rem;
+}
+
+.icon-medium {
+    font-size: 6vw !important;
+    color: #666;
+}
+
+/* =============================================================================
+   ERROR PAGE SPECIFIC
+   ============================================================================= */
+#error-container {
+    text-align: center;
+    font-family: "Source Sans Pro", Helvetica, Arial, sans-serif;
+    padding: 20px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.error-icon {
+    margin-bottom: 1rem;
+}
+
+.error-title {
+    font-weight: 900;
+    font-size: 6vw;
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.error-description {
+    font-size: 3vw;
+    color: #666;
+    margin-bottom: 2rem;
+    line-height: 1.5;
+}
+
+.error-actions {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+.error-code {
+    font-size: 2vw;
+    color: #bbb;
+    margin-top: 2rem;
+}
+
+/* =============================================================================
+   LOGIN PAGE SPECIFIC
+   ============================================================================= */
+.login-container {
+    display: flex;
+    width: 100%;
+    justify-content: space-around;
+    align-items: center;
+    gap: 40px;
+}
+
+.login-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.login-icon {
+    margin-bottom: 1.5rem;
+}
+
+.login-title {
+    font-weight: 900;
+    font-size: 5vw;
+    margin-bottom: 1.5rem;
+    color: #333;
+}
+
+.login-description {
+    font-size: 2.5vw;
+    color: #666;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+/* =============================================================================
+   MUSIC PLAYER SPECIFIC
+   ============================================================================= */
 #album-art {
     width: 100%;
     box-shadow: 5px 5px 25px 5px rgba(0, 0, 0, 0.5);
@@ -74,40 +302,71 @@ html, body {
     box-shadow: 0px -2px 25px 5px rgba(0, 0, 0, 0.5)
 }
 
-/* Typography & Utility Classes */
+/* =============================================================================
+   UTILITY CLASSES
+   ============================================================================= */
 .center {
     display: inline-block;
     margin: 0 auto;
     text-align: center;
 }
 
-.title {
-    font-weight: 900;
-    font-size: 7.5vw;
+.actions-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 2rem;
 }
 
-.artist {
-    font-weight: 400;
-    font-size: 4.5vw;
-}
-
-.album {
-    font-weight: 400;
-    opacity: 0.75;
-    font-size: 4.5vw;
-}
-
-.material-icons {
-    font-size: 5vw;
-}
-
-.not-playing {
-    font-weight: 900;
-    font-size: 10.5vw;
-}
-
-.sign-in {
-    text-align: center;
-    font-weight: 900;
-    font-size: 10.5vw;
+/* =============================================================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================================================= */
+@media (max-width: 768px) {
+    .page-title {
+        font-size: 9vw;
+    }
+    
+    .page-subtitle {
+        font-size: 4vw;
+    }
+    
+    .btn {
+        font-size: 4.5vw;
+        padding: 16px 32px;
+    }
+    
+    .btn-large {
+        font-size: 5vw;
+        padding: 20px 40px;
+    }
+    
+    .btn .material-icons {
+        font-size: 5vw !important;
+    }
+    
+    .icon-large {
+        font-size: 12vw !important;
+    }
+    
+    .error-title {
+        font-size: 8vw;
+    }
+    
+    .error-description {
+        font-size: 4vw;
+    }
+    
+    .login-container {
+        flex-direction: column;
+        gap: 30px;
+    }
+    
+    .login-title {
+        font-size: 7vw;
+    }
+    
+    .login-description {
+        font-size: 3.5vw;
+    }
 }

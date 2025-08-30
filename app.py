@@ -1,330 +1,460 @@
 """
-CS50 Final Project: Spotify Status - Roman Garms
-
-Prerequisites
-
-    Install prereqs from requirements.txt
-
-    // from your [app settings](https://developer.spotify.com/dashboard/applications)
-
-    export SPOTIPY_CLIENT_ID=client_id_here
-    export SPOTIPY_CLIENT_SECRET=client_secret_here
-    export SPOTIPY_REDIRECT_URI='http://127.0.0.1:5000' // must contain a port
-
-    // set the redirect url to 'http://127.0.0.1:5000' for testing on your local machine. When hosting, you will need to change that to the address of the device you are hosting on. 
-    // SPOTIPY_REDIRECT_URI must be added to your [app settings](https://developer.spotify.com/dashboard/applications)
-    // on Windows, use `SET` instead of `export`
-
-Run app.py
-    python3 app.py OR python3 -m flask run
-    Alternatively, run using the launch.json under .vscode/ with the VSCode debugger
+Spotify Status Display App
+A Flask application that displays currently playing Spotify tracks with a React frontend.
 """
 
-from http.client import HTTPException
 import os
-from flask import Flask, session, request, redirect, render_template
-import spotipy
-import json
 import sys
 import re
+import json
 from datetime import timedelta
+from http.client import HTTPException
 
-debug = False
+from flask import Flask, session, request, redirect, render_template, send_from_directory, jsonify
+import spotipy
+from spotipy.oauth2 import SpotifyOAuth
 
-if debug:
-    # Load environment variables from .env file
+# =============================================================================
+# CONFIGURATION
+# =============================================================================
+
+# Debug mode - set to True for development
+DEBUG = True
+
+if DEBUG:
     from dotenv import load_dotenv
+    load_dotenv()
 
-    load_dotenv()  # take environment variables from .env.
-
+# App configuration
 app = Flask(__name__)
 
-# Use environment variable for Flask secret key
-flask_secret = os.getenv("FLASK_SECRET_KEY")
-if flask_secret:
-    app.config["SECRET_KEY"] = flask_secret
-else:
-    # Production - require environment variable
-    print(f"ERROR: FLASK_SECRET_KEY environment variable not set.")
-    sys.exit("Missing FLASK_SECRET_KEY for production deployment")
+# Flask configuration
+app.config.update(
+    SECRET_KEY=os.getenv("FLASK_SECRET_KEY"),
+    PERMANENT_SESSION_LIFETIME=timedelta(days=7),
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_NAME="spotify_session",
+    SESSION_COOKIE_SECURE=not DEBUG  # Only use secure cookies in production
+)
 
-# Configure client-side session cookies
-app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=7)  # Refreshes on each request
-app.config["SESSION_COOKIE_HTTPONLY"] = True
-app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-app.config["SESSION_COOKIE_NAME"] = "spotify_session"
-# Only use secure cookies in production
-if not debug:
-    app.config["SESSION_COOKIE_SECURE"] = True
+# Spotify OAuth scope
+SPOTIFY_SCOPE = " ".join([
+    "user-read-currently-playing",
+    "playlist-modify-private",
+    "user-modify-playback-state",
+    "user-library-read",
+    "user-library-modify",
+    "playlist-modify-public"
+])
 
-@app.before_request
-def before_request():
-    """Refresh session on each request to keep it alive"""
-    session.permanent = True
-    # This refreshes the cookie expiration on each request
-    session.modified = True
-maxTitleLength = 25
-maxArtistLength = 35
-maxAlbumLength = 20
+# Text formatting limits
+MAX_TITLE_LENGTH = 25
+MAX_ARTIST_LENGTH = 35
+MAX_ALBUM_LENGTH = 20
 
 # Screen server configuration (optional)
 SCREEN_SERVER_URL = os.getenv("SCREEN_SERVER_URL")
+
+# Validate configuration
+if not app.config["SECRET_KEY"]:
+    sys.exit("ERROR: FLASK_SECRET_KEY environment variable not set.")
+
 if SCREEN_SERVER_URL:
-    print(f"Optional: Screen server configured at: {SCREEN_SERVER_URL}")
-else:
-    print("Optional: No screen server configured.")
+    print(f"Screen server configured at: {SCREEN_SERVER_URL}")
+
+# =============================================================================
+# HELPER FUNCTIONS
+# =============================================================================
+
+def wants_json():
+    """Check if the request wants JSON response instead of HTML."""
+    # Check Accept header for JSON preference
+    accept = request.headers.get('Accept', '')
+    
+    # Check for explicit HTML request (browser navigation)
+    # Browsers typically send: text/html,application/xhtml+xml,...
+    if accept.startswith('text/html'):
+        return False
+    
+    # If Accept header explicitly prefers JSON
+    if 'application/json' in accept:
+        return True
+    
+    # For fetch() requests (usually */* or empty), return JSON
+    # This handles React's fetch() which doesn't set specific Accept headers
+    return True
+
+def get_react_assets():
+    """Read Vite manifest to get current build files."""
+    manifest_path = 'static/react-build/.vite/manifest.json'
+    
+    try:
+        with open(manifest_path, 'r') as f:
+            manifest = json.load(f)
+        
+        # Get the main entry point assets
+        if 'index.html' in manifest:
+            entry = manifest['index.html']
+            return {
+                'js_file': entry.get('file', ''),
+                'css_files': entry.get('css', [])
+            }
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        # Fallback if manifest doesn't exist
+        print(f"Warning: Could not read Vite manifest: {e}")
+    
+    return {'js_file': '', 'css_files': []}
+
+def get_spotify_auth_manager():
+    """Create and return a Spotify auth manager."""
+    cache_handler = spotipy.cache_handler.FlaskSessionCacheHandler(session)
+    return SpotifyOAuth(
+        scope=SPOTIFY_SCOPE,
+        cache_handler=cache_handler,
+        show_dialog=False,
+    )
+
+def get_spotify_client():
+    """Get an authenticated Spotify client or None if not authenticated."""
+    auth_manager = get_spotify_auth_manager()
+    if not auth_manager.cache_handler.get_cached_token():
+        return None
+    return spotipy.Spotify(auth_manager=auth_manager)
+
+def format_text(text, max_length, shorten=True):
+    """Format text to fit within max length."""
+    if not shorten or len(text) <= max_length:
+        return text
+    return text[:max_length] + "..."
+
+def format_title(title):
+    """Format track title."""
+    # Remove featured artists from title
+    title = re.sub(r"\(feat\. .+\)", "", title)
+    return format_text(title, MAX_TITLE_LENGTH)
+
+def format_artist(artist):
+    """Format artist name."""
+    return format_text(artist, MAX_ARTIST_LENGTH)
+
+def format_album(title, album):
+    """Format album name."""
+    if len(album) > MAX_ALBUM_LENGTH:
+        # Don't show album if it's the same as title
+        if album == title:
+            return ""
+        return format_text(album, MAX_ALBUM_LENGTH)
+    return album
+
+def get_artists_string(artists_json):
+    """Extract and join artist names from Spotify API response."""
+    return ", ".join(artist["name"] for artist in artists_json)
+
+def extract_track_info(track):
+    """Extract and format track information from Spotify API response."""
+    if not track or "item" not in track:
+        return None
+    
+    item = track["item"]
+    title = format_title(item["name"])
+    artist = format_artist(get_artists_string(item["artists"]))
+    album = format_album(item["name"], item["album"]["name"])
+    
+    return {
+        "id": item["id"],
+        "title": title,
+        "artist": artist,
+        "album": album,
+        "art_url": item["album"]["images"][0]["url"] if item["album"]["images"] else None,
+        "year": item["album"]["release_date"][:4] if item["album"]["release_date"] else "",
+        "is_playing": track.get("is_playing", False),
+        "duration_ms": item["duration_ms"],
+        "progress_ms": track.get("progress_ms", 0)
+    }
+
+# =============================================================================
+# MIDDLEWARE
+# =============================================================================
+
+@app.before_request
+def refresh_session():
+    """Refresh session on each request to keep it alive."""
+    session.permanent = True
+    session.modified = True
+
+# =============================================================================
+# AUTHENTICATION ROUTES
+# =============================================================================
 
 @app.route("/")
 def index():
-    cache_handler = spotipy.cache_handler.FlaskSessionCacheHandler(session)
-    auth_manager = spotipy.oauth2.SpotifyOAuth(
-        scope="user-read-currently-playing playlist-modify-private user-modify-playback-state user-library-read user-library-modify playlist-modify-private playlist-modify-public",
-        cache_handler=cache_handler,
-        show_dialog=False,
-    )
-
+    """Main route - handle authentication and serve React app."""
+    auth_manager = get_spotify_auth_manager()
+    
+    # Handle OAuth callback
     if request.args.get("code"):
-        # Step 2. Being redirected from Spotify auth page
         auth_manager.get_access_token(request.args.get("code"))
         return redirect("/")
-
-    # Check if we have a token in the cache
-    token_info = cache_handler.get_cached_token()
-    if not token_info:
-        # Step 1. Display sign in link when no token at all
+    
+    # Check authentication status
+    if not auth_manager.cache_handler.get_cached_token():
         auth_url = auth_manager.get_authorize_url()
         return render_template("login.html", auth_url=auth_url)
-
-    # Step 3. We have a token (expired or not), let Spotipy handle refresh
-    # and go to currently_playing
-    return redirect("/currently_playing")
-
+    
+    # Get React assets from manifest
+    assets = get_react_assets()
+    
+    # Serve React app for authenticated users
+    return render_template("react_app.html", 
+                         screen_server_url=SCREEN_SERVER_URL,
+                         **assets)
 
 @app.route("/sign_out")
 def sign_out():
-    session.pop("token_info", None)
+    """Sign out and clear session."""
+    session.clear()
     return redirect("/")
 
+# =============================================================================
+# STATIC FILE SERVING
+# =============================================================================
 
-@app.route("/currently_playing")
+@app.route('/assets/<path:path>')
+def serve_assets(path):
+    """Serve React build assets."""
+    return send_from_directory('static/react-build/assets', path)
+
+# =============================================================================
+# API ROUTES
+# =============================================================================
+
+@app.route("/api/currently_playing")
 def currently_playing():
-    spotify = get_spotify()
+    """API endpoint to get the currently playing track with full details."""
+    spotify = get_spotify_client()
     if not spotify:
-        return redirect("/")
-    track = spotify.current_user_playing_track()
-    if track is not None:
-        title = track["item"]["name"]
-        artist = get_artists(track["item"]["artists"])
-        album = track["item"]["album"]["name"]
-        album = format_album(title, album)
-        artist = format_artist(artist)
-        title = format_title(title)
-        art_url = track["item"]["album"]["images"][0]["url"]
-        year = track["item"]["album"]["release_date"][:4]
-        song_id = track["item"]["id"]
-        liked = spotify.current_user_saved_tracks_contains(tracks=[song_id])[0]
-        currently_playing = track["is_playing"]
-        return render_template(
-            "currently_playing.html",
-            title=title,
-            artist=artist,
-            album=album,
-            art_url=art_url,
-            year=year,
-            song_id=song_id,
-            currently_playing=currently_playing,
-            liked=liked,
-            json=json.dumps(track, indent=2),
-            screen_server_url=SCREEN_SERVER_URL,
-        )
-    return render_template("not_playing.html", screen_server_url=SCREEN_SERVER_URL, song_id="", currently_playing=False)
-
-
-# debugging
-@app.route("/debug")
-def debug():
-    spotify = get_spotify()
-    if not spotify:
-        return redirect("/")
-    track = spotify.current_user_playing_track()
-    duration = track["item"]["duration_ms"]
-    progress = track["progress_ms"]
-
-    return "duration is " + str(duration) + " and progress is " + str(progress)
-
-
-# pinged every ~2 sec to see if refresh of page is required
-@app.route("/current_track_xhr")
-def current_track_xhr():
-    spotify = get_spotify()
-    if not spotify:
-        return {"error": "Not authenticated"}, 401
-    track = spotify.current_user_playing_track()
-
-    if track is not None:
-        new_id = track["item"]["id"]
-        song_id = request.args.get("id")
-        spotapi_currently_playing = track["is_playing"]
-        currently_playing = request.args.get("currently_playing") == "True"
-        if song_id == new_id:
-            same_track = True
-        else:
-            same_track = False
-        duration = track["item"]["duration_ms"]
-        progress = track["progress_ms"]
-
+        return jsonify({"error": "Not authenticated"}), 401
+    
+    try:
+        track = spotify.current_user_playing_track()
+        
+        if not track:
+            return jsonify({"track": None, "screen_server_url": SCREEN_SERVER_URL})
+        
+        track_info = extract_track_info(track)
+        if not track_info:
+            return jsonify({"track": None, "screen_server_url": SCREEN_SERVER_URL})
+        
+        # Check if track is liked
         try:
-            liked = spotify.current_user_saved_tracks_contains(tracks=[song_id])[0]
-        except spotipy.exceptions.SpotifyException:
+            liked = spotify.current_user_saved_tracks_contains(tracks=[track_info["id"]])[0]
+        except:
             liked = False
+        
+        return jsonify({
+            "track": True,
+            "title": track_info["title"],
+            "artist": track_info["artist"],
+            "album": track_info["album"],
+            "art_url": track_info["art_url"],
+            "year": track_info["year"],
+            "song_id": track_info["id"],
+            "currently_playing": track_info["is_playing"],
+            "liked": liked,
+            "screen_server_url": SCREEN_SERVER_URL
+        })
+    
+    except Exception as e:
+        print(f"Error fetching current track: {e}")
+        return jsonify({"error": "Failed to fetch track"}), 500
 
-    else:
-        spotapi_currently_playing = False
-        currently_playing = request.args.get("currently_playing") == "True"
-        if currently_playing == spotapi_currently_playing:
-            same_track = True
-        else:
-            same_track = False
-        duration = 0
-        progress = 0
-        liked = False
+@app.route("/api/current_track_xhr")
+def current_track_status():
+    """API endpoint to get lightweight track status for polling."""
+    spotify = get_spotify_client()
+    if not spotify:
+        return jsonify({"error": "Not authenticated"}), 401
+    
+    try:
+        track = spotify.current_user_playing_track()
+        current_id = request.args.get("id")
+        
+        if track:
+            track_info = extract_track_info(track)
+            if track_info:
+                same_track = (track_info["id"] == current_id)
+                
+                # Check liked status for current track
+                try:
+                    liked = spotify.current_user_saved_tracks_contains(tracks=[current_id])[0] if current_id else False
+                except:
+                    liked = False
+                
+                return jsonify({
+                    "progress": track_info["progress_ms"],
+                    "duration": track_info["duration_ms"],
+                    "same_track": same_track,
+                    "currently_playing": track_info["is_playing"],
+                    "liked": liked
+                })
+        
+        # No track playing
+        return jsonify({
+            "progress": 0,
+            "duration": 0,
+            "same_track": not bool(current_id),  # Same if both are empty
+            "currently_playing": False,
+            "liked": False
+        })
+    
+    except Exception as e:
+        print(f"Error checking track status: {e}")
+        return jsonify({"error": "Failed to check status"}), 500
 
-    # getting more info to pass through to page
+# =============================================================================
+# PLAYBACK CONTROL ROUTES
+# =============================================================================
 
-    currently_playing = spotapi_currently_playing
-
-    return_array = {
-        "progress": progress,
-        "duration": duration,
-        "same_track": same_track,
-        "currently_playing": currently_playing,
-        "liked": liked,
-    }
-
-    return return_array
-
-
-# end of html pages, now just assorted methods
-
-
-def get_artists(artists_json):
-    artists = []
-    for artist in artists_json:
-        artists.append(artist["name"])
-    return ", ".join(artists)
-
-
-@app.route("/play")
+@app.route("/api/play")
 def play():
-    spotify = get_spotify()
+    """API endpoint to start playback."""
+    spotify = get_spotify_client()
     if not spotify:
-        return redirect("/")
-    spotify.start_playback()
-    return "playing"
+        return jsonify({"error": "Not authenticated"}), 401
+    
+    try:
+        spotify.start_playback()
+        return jsonify({"status": "playing"})
+    except Exception as e:
+        print(f"Error starting playback: {e}")
+        return jsonify({"error": "Failed to start playback"}), 500
 
-
-@app.route("/pause")
+@app.route("/api/pause")
 def pause():
-    spotify = get_spotify()
+    """API endpoint to pause playback."""
+    spotify = get_spotify_client()
     if not spotify:
-        return redirect("/")
-    spotify.pause_playback()
-    return "pausing"
+        return jsonify({"error": "Not authenticated"}), 401
+    
+    try:
+        spotify.pause_playback()
+        return jsonify({"status": "paused"})
+    except Exception as e:
+        print(f"Error pausing playback: {e}")
+        return jsonify({"error": "Failed to pause playback"}), 500
 
-
-@app.route("/skip")
+@app.route("/api/skip")
 def skip():
-    spotify = get_spotify()
+    """API endpoint to skip to next track."""
+    spotify = get_spotify_client()
     if not spotify:
-        return redirect("/")
-    spotify.next_track()
-    return "skipping"
+        return jsonify({"error": "Not authenticated"}), 401
+    
+    try:
+        spotify.next_track()
+        return jsonify({"status": "skipped"})
+    except Exception as e:
+        print(f"Error skipping track: {e}")
+        return jsonify({"error": "Failed to skip track"}), 500
 
-
-@app.route("/like")
+@app.route("/api/like")
 def like():
-    spotify = get_spotify()
+    """API endpoint to like the current track."""
+    spotify = get_spotify_client()
     if not spotify:
-        return redirect("/")
+        return jsonify({"error": "Not authenticated"}), 401
+    
     song_id = request.args.get("id")
-    spotify.current_user_saved_tracks_add(tracks=[song_id])
-    return "liking"
+    if not song_id:
+        return jsonify({"error": "No song ID provided"}), 400
+    
+    try:
+        spotify.current_user_saved_tracks_add(tracks=[song_id])
+        return jsonify({"status": "liked", "song_id": song_id})
+    except Exception as e:
+        print(f"Error liking track: {e}")
+        return jsonify({"error": "Failed to like track"}), 500
 
-
-@app.route("/unlike")
+@app.route("/api/unlike")
 def unlike():
-    spotify = get_spotify()
+    """API endpoint to unlike the current track."""
+    spotify = get_spotify_client()
     if not spotify:
-        return redirect("/")
+        return jsonify({"error": "Not authenticated"}), 401
+    
     song_id = request.args.get("id")
-    spotify.current_user_saved_tracks_delete(tracks=[song_id])
-    return "unliking"
+    if not song_id:
+        return jsonify({"error": "No song ID provided"}), 400
+    
+    try:
+        spotify.current_user_saved_tracks_delete(tracks=[song_id])
+        return jsonify({"status": "unliked", "song_id": song_id})
+    except Exception as e:
+        print(f"Error unliking track: {e}")
+        return jsonify({"error": "Failed to unlike track"}), 500
+
+# =============================================================================
+# ERROR HANDLERS
+# =============================================================================
+
+@app.errorhandler(404)
+def page_not_found(e):
+    """Handle 404 errors specifically."""
+    return render_template("error.html", 
+                         error_code=404,
+                         error_message="Page Not Found",
+                         error_description="The page you're looking for doesn't exist."), 404
 
 @app.errorhandler(HTTPException)
-def handle_exception(e):
-    # Handle HTTP exceptions
-    return render_template("error.html", error=e), e.code
+def handle_http_exception(e):
+    """Handle HTTP exceptions."""
+    # Define user-friendly messages for common HTTP errors
+    error_messages = {
+        404: "Page Not Found",
+        401: "Please Sign In",
+        403: "Access Denied",
+        500: "Something Went Wrong",
+        502: "Server Connection Error",
+        503: "Service Temporarily Unavailable"
+    }
+    
+    error_message = error_messages.get(e.code, f"Error {e.code}")
+    error_description = e.description if hasattr(e, 'description') else str(e)
+    
+    return render_template("error.html", 
+                         error_code=e.code,
+                         error_message=error_message,
+                         error_description=error_description), e.code
 
 @app.errorhandler(Exception)
 def handle_exception(e):
-    # Handle other exceptions
-    return render_template("error.html", error=e), e.code
+    """Handle other exceptions."""
+    print(f"Unhandled exception: {e}")
+    return render_template("error.html", 
+                         error_code=500,
+                         error_message="Something Went Wrong",
+                         error_description="An unexpected error occurred. Please try again."), 500
 
+# =============================================================================
+# MAIN ENTRY POINT
+# =============================================================================
 
-def get_spotify():
-    cache_handler = spotipy.cache_handler.FlaskSessionCacheHandler(session)
-    auth_manager = spotipy.oauth2.SpotifyOAuth(
-        scope="user-read-currently-playing playlist-modify-private user-modify-playback-state user-library-read user-library-modify playlist-modify-private playlist-modify-public",
-        cache_handler=cache_handler,
-        show_dialog=False,
-    )
-    
-    # Check if we have any token at all
-    if not cache_handler.get_cached_token():
-        return None
-    
-    # Let Spotipy handle token refresh automatically
-    return spotipy.Spotify(auth_manager=auth_manager)
-
-
-def shorten_text(string, length):
-    return string[:length] + "..."
-
-
-def format_title(title):
-    title = re.sub(r"\(feat\. .+\)", "", title)
-    if len(title) > maxTitleLength:
-        title = shorten_text(title, maxTitleLength)
-    return title
-
-
-def format_artist(artist):
-    if len(artist) > maxArtistLength:
-        return shorten_text(artist, maxArtistLength)
-    return artist
-
-
-def format_album(title, album):
-    if len(album) > maxAlbumLength:
-        if album == title:
-            return ""
-        else:
-            return shorten_text(album, maxAlbumLength)
-    return album
-
-
-"""
-Following lines allow application to be run more conveniently with
-`python3 app.py` (Make sure you're using python3)
-"""
 if __name__ == "__main__":
-    if os.getenv("SPOTIPY_CLIENT_ID") == None:
-        sys.exit("Missing Environment Variable: SPOTIPY_CLIENT_ID")
-    if os.getenv("SPOTIPY_CLIENT_SECRET") == None:
-        sys.exit("Missing Environment Variable: SPOTIPY_CLIENT_SECRET")
-    if os.getenv("SPOTIPY_REDIRECT_URI") == None:
-        sys.exit("Missing Environment Variable: SPOTIPY_REDIRECT_URI")
-    print(os.getenv("SPOTIPY_REDIRECT_URI"))
+    # Validate required environment variables
+    required_vars = ["SPOTIPY_CLIENT_ID", "SPOTIPY_CLIENT_SECRET", "SPOTIPY_REDIRECT_URI"]
+    missing_vars = [var for var in required_vars if not os.getenv(var)]
+    
+    if missing_vars:
+        sys.exit(f"Missing required environment variables: {', '.join(missing_vars)}")
+    
+    print(f"Redirect URI: {os.getenv('SPOTIPY_REDIRECT_URI')}")
+    
+    # Use waitress for production-ready serving
     from waitress import serve
-
-    serve(app, host="0.0.0.0", port=8100)
+    
+    # When running directly via python app.py, always use port 5000
+    # (Production uses Gunicorn which reads PORT env var, not this code)
+    port = 5000
+    print(f"\n✨ Spotify Status app running at: http://127.0.0.1:{port}\n")
+    serve(app, host="0.0.0.0", port=port)

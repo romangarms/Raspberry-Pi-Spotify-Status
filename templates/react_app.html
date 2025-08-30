@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Status</title>
+    <link href="/static/favicon.png" rel="icon">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    {% for css_file in css_files %}
+    <link rel="stylesheet" crossorigin href="/{{ css_file }}">
+    {% endfor %}
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      // Pass server config to React app
+      window.SCREEN_SERVER_URL = {{ screen_server_url | tojson }};
+    </script>
+    {% if js_file %}
+    <script type="module" crossorigin src="/{{ js_file }}"></script>
+    {% endif %}
+  </body>
+</html>

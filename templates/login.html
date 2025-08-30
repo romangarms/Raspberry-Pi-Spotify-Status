@@ -1,16 +1,43 @@
 {% extends "layout.html" %}
 
-{%block title %}
-<title>Login</title>
-{%endblock%}
+{% block title %}
+<title>Sign In - Spotify Status</title>
+{% endblock %}
 
 {% block main %}
 <div id="outer">
-        <div id="left">
-        <h1 class="sign-in"><a href="{{ auth_url }}">Sign in</a></h1>
-    </div>
-    <div id="right">
-        <h1 class="sign-in"><a href="https://github.com/Romano-Garmez/Raspberry-Pi-Spotify-Status">About</a></h1>
+    <div class="login-container">
+        <!-- Sign In Section -->
+        <div class="login-section">
+            <div class="login-icon">
+                <i class="material-icons icon-large">music_note</i>
+            </div>
+            <h1 class="login-title">Spotify Status</h1>
+            <p class="login-description">
+                Connect your Spotify account to display currently playing tracks
+            </p>
+            <a href="{{ auth_url }}" class="btn btn-primary btn-large">
+                <i class="material-icons">login</i>
+                <span>Sign in with Spotify</span>
+            </a>
+        </div>
+        
+        <!-- About Section -->
+        <div class="login-section">
+            <div class="login-icon">
+                <i class="material-icons icon-medium">info_outline</i>
+            </div>
+            <h2 class="login-title">About</h2>
+            <p class="login-description">
+                A touchscreen-friendly display for your currently playing Spotify tracks
+            </p>
+            <a href="https://github.com/Romano-Garmez/Raspberry-Pi-Spotify-Status" 
+               target="_blank" 
+               class="btn btn-secondary">
+                <i class="material-icons">code</i>
+                <span>View on GitHub</span>
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}
