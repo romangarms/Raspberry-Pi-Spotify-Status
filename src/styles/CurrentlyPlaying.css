@@ -27,20 +27,44 @@
 /* Typography */
 .title {
   font-weight: 900;
-  font-size: 7.5vw;
+  font-size: 6.5vw;
   margin-bottom: 0.5rem;
+  /* Line-based display limits */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
 }
 
 .artist {
   font-weight: 400;
   font-size: 4.5vw;
   margin-bottom: 0.5rem;
+  /* Line-based display limits */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
 }
 
 .album {
   font-weight: 400;
   opacity: 0.75;
   font-size: 4.5vw;
+  /* Line-based display limits */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
 }
 
 /* Media controls */
@@ -100,7 +124,7 @@
   opacity: 0;
 }
 
-/* Optional: Add a subtle scale effect for album art */
+/* Add a subtle scale effect for album art */
 #album-art.fade-out {
   transform: scale(0.95);
 }

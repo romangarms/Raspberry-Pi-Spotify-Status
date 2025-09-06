@@ -8,7 +8,6 @@ function useSpotifyPolling({
   setIsLiked,
   setProgress,
   setDuration,
-  ignoreAutoRefresh,
   screenServerUrl
 }) {
   const intervalRef = useRef(null)

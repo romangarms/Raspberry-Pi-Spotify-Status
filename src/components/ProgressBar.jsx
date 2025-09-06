@@ -1,4 +1,3 @@
-import React from 'react'
 import { PROGRESS_BAR } from '../config/constants'
 
 function ProgressBar({ progress, duration, backgroundColor, textColor }) {

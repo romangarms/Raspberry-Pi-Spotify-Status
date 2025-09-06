@@ -5,7 +5,6 @@ A Flask application that displays currently playing Spotify tracks with a React 
 
 import os
 import sys
-import re
 import json
 from datetime import timedelta
 from http.client import HTTPException
@@ -48,10 +47,6 @@ SPOTIFY_SCOPE = " ".join([
     "playlist-modify-public"
 ])
 
-# Text formatting limits
-MAX_TITLE_LENGTH = 25
-MAX_ARTIST_LENGTH = 35
-MAX_ALBUM_LENGTH = 20
 
 # Screen server configuration (optional)
 SCREEN_SERVER_URL = os.getenv("SCREEN_SERVER_URL")
@@ -122,30 +117,7 @@ def get_spotify_client():
         return None
     return spotipy.Spotify(auth_manager=auth_manager)
 
-def format_text(text, max_length, shorten=True):
-    """Format text to fit within max length."""
-    if not shorten or len(text) <= max_length:
-        return text
-    return text[:max_length] + "..."
 
-def format_title(title):
-    """Format track title."""
-    # Remove featured artists from title
-    title = re.sub(r"\(feat\. .+\)", "", title)
-    return format_text(title, MAX_TITLE_LENGTH)
-
-def format_artist(artist):
-    """Format artist name."""
-    return format_text(artist, MAX_ARTIST_LENGTH)
-
-def format_album(title, album):
-    """Format album name."""
-    if len(album) > MAX_ALBUM_LENGTH:
-        # Don't show album if it's the same as title
-        if album == title:
-            return ""
-        return format_text(album, MAX_ALBUM_LENGTH)
-    return album
 
 def get_artists_string(artists_json):
     """Extract and join artist names from Spotify API response."""
@@ -157,9 +129,9 @@ def extract_track_info(track):
         return None
     
     item = track["item"]
-    title = format_title(item["name"])
-    artist = format_artist(get_artists_string(item["artists"]))
-    album = format_album(item["name"], item["album"]["name"])
+    title = item["name"]
+    artist = get_artists_string(item["artists"])
+    album = item["album"]["name"]
     
     return {
         "id": item["id"],
