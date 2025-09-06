@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import ColorThief from 'colorthief'
 import MediaControls from './MediaControls'
 import ProgressBar from './ProgressBar'
-import { SCREEN_SERVER } from '../config/constants'
+import ScreenOffNotification from './ScreenOffNotification'
+import useScreenControl from '../hooks/useScreenControl'
 import '../styles/CurrentlyPlaying.css'
 
 function CurrentlyPlaying({
@@ -23,6 +24,9 @@ function CurrentlyPlaying({
   const imgRef = useRef(null)
   const colorThiefRef = useRef(new ColorThief())
   const lastTrackIdRef = useRef(track?.id)
+  
+  // Use the screen control hook
+  const screenOffCountdown = useScreenControl(isPlaying, screenServerUrl)
 
   // Handle track changes with fade transition
   useEffect(() => {
@@ -110,18 +114,9 @@ function CurrentlyPlaying({
     }
   }, [backgroundColor, textColor])
 
-  // Handle screen server
-  useEffect(() => {
-    if (screenServerUrl) {
-      const endpoint = isPlaying ? SCREEN_SERVER.TURN_ON_ENDPOINT : SCREEN_SERVER.TURN_OFF_ENDPOINT
-      fetch(`${screenServerUrl}${endpoint}`).catch(() => {
-        console.log('Screen server not reachable')
-      })
-    }
-  }, [isPlaying, screenServerUrl])
-
   return (
     <>
+      <ScreenOffNotification secondsRemaining={screenOffCountdown} />
       <div id="outer" className={isTransitioning ? 'transitioning' : ''}>
         <div id="left">
           <img

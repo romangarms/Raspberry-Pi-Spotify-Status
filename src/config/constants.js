@@ -16,4 +16,5 @@ export const PROGRESS_BAR = {
 export const SCREEN_SERVER = {
   TURN_ON_ENDPOINT: '/TurnOnScreen',
   TURN_OFF_ENDPOINT: '/TurnOffScreen',
+  TURN_OFF_DELAY: 30000,  // 30 seconds delay before turning off screen (ms)
 }

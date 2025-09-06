@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react'
-import { POLLING, API_RESPONSE_DELAY, SCREEN_SERVER } from '../config/constants'
+import { POLLING, API_RESPONSE_DELAY } from '../config/constants'
 
 function useSpotifyPolling({
   currentTrack,
@@ -7,8 +7,7 @@ function useSpotifyPolling({
   setIsPlaying,
   setIsLiked,
   setProgress,
-  setDuration,
-  screenServerUrl
+  setDuration
 }) {
   const intervalRef = useRef(null)
   const pollTrackInfoRef = useRef(null)
@@ -81,18 +80,10 @@ function useSpotifyPolling({
           console.error('Error fetching track details:', error)
         }
       }
-
-      // Handle screen server
-      if (screenServerUrl) {
-        const endpoint = data.currently_playing ? SCREEN_SERVER.TURN_ON_ENDPOINT : SCREEN_SERVER.TURN_OFF_ENDPOINT
-        fetch(`${screenServerUrl}${endpoint}`).catch(() => {
-          console.log('Screen server not reachable')
-        })
-      }
     } catch (error) {
       console.error('Error polling track info:', error)
     }
-  }, [currentTrack?.id, setCurrentTrack, setIsPlaying, setIsLiked, setProgress, setDuration, screenServerUrl])
+  }, [currentTrack?.id, setCurrentTrack, setIsPlaying, setIsLiked, setProgress, setDuration])
 
   // Store the latest pollTrackInfo in a ref so the interval always uses the current version
   useEffect(() => {

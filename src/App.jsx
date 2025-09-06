@@ -30,8 +30,7 @@ function App() {
     setIsLiked,
     setProgress,
     setDuration,
-    ignoreAutoRefresh,
-    screenServerUrl: screenServerUrl.current
+    ignoreAutoRefresh
   })
 
   const handlePlayPause = async () => {
