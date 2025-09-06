@@ -19,12 +19,15 @@ from spotipy.oauth2 import SpotifyOAuth
 # =============================================================================
 
 # Parse command line arguments
-parser = argparse.ArgumentParser(description='Spotify Status Display App')
-parser.add_argument('--debug', action='store_true', help='Enable debug mode for development')
-args = parser.parse_args()
-
-# Debug mode - set via command line argument
-DEBUG = args.debug
+DEBUG = False
+try:
+    parser = argparse.ArgumentParser(description='Spotify Status Display App')
+    parser.add_argument('--debug', action='store_true', help='Enable debug mode for development')
+    args = parser.parse_args()
+    DEBUG = args.debug
+except SystemExit:
+    # If argument parsing fails (e.g., running in IDE), default to False
+    DEBUG = False
 
 if DEBUG:
     from dotenv import load_dotenv
