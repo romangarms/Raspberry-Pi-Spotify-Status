@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import ColorThief from 'colorthief'
 import MediaControls from './MediaControls'
 import ProgressBar from './ProgressBar'
+import { SCREEN_SERVER } from '../config/constants'
 import '../styles/CurrentlyPlaying.css'
 
 function CurrentlyPlaying({
@@ -112,7 +113,7 @@ function CurrentlyPlaying({
   // Handle screen server
   useEffect(() => {
     if (screenServerUrl) {
-      const endpoint = isPlaying ? '/TurnOnScreen' : '/TurnOffScreen'
+      const endpoint = isPlaying ? SCREEN_SERVER.TURN_ON_ENDPOINT : SCREEN_SERVER.TURN_OFF_ENDPOINT
       fetch(`${screenServerUrl}${endpoint}`).catch(() => {
         console.log('Screen server not reachable')
       })

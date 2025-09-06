@@ -1,16 +1,10 @@
 // Polling configuration
 export const POLLING = {
   INTERVAL: 1000,  // 1 second polling interval (ms)
-  PAUSE_AFTER_ACTION: 1500,  // Pause auto-polling after user action (ms)
-  PAUSE_AFTER_SKIP: 1500,  // Pause after skip (same as other actions)
 }
 
-// API response delays (time for Spotify API to update)
-export const API_DELAYS = {
-  PLAY_PAUSE: 300,  // Delay before fetching after play/pause (ms)
-  SKIP: 300,  // Delay before fetching after skip (ms)
-  LIKE_UNLIKE: 300,  // Delay before fetching after like/unlike (ms)
-}
+// Spotify API response delay - time to wait for API to update after actions
+export const API_RESPONSE_DELAY = 300  // milliseconds
 
 // Progress bar animation
 export const PROGRESS_BAR = {
@@ -18,14 +12,7 @@ export const PROGRESS_BAR = {
   COLOR_TRANSITION: 300,  // Color change transition (ms)
 }
 
-// Text formatting limits (matches Flask backend)
-export const TEXT_LIMITS = {
-  TITLE_MAX: 25,
-  ARTIST_MAX: 35,
-  ALBUM_MAX: 20,
-}
-
-// Screen server configuration
+// Screen server endpoints
 export const SCREEN_SERVER = {
   TURN_ON_ENDPOINT: '/TurnOnScreen',
   TURN_OFF_ENDPOINT: '/TurnOffScreen',

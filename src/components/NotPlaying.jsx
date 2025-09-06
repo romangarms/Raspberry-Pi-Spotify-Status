@@ -1,11 +1,12 @@
 import { useEffect } from 'react'
+import { SCREEN_SERVER } from '../config/constants'
 import '../styles/NotPlaying.css'
 
 function NotPlaying({ screenServerUrl }) {
   useEffect(() => {
     // Turn off screen when nothing is playing
     if (screenServerUrl) {
-      fetch(`${screenServerUrl}/TurnOffScreen`).catch(() => {
+      fetch(`${screenServerUrl}${SCREEN_SERVER.TURN_OFF_ENDPOINT}`).catch(() => {
         console.log('Screen server not reachable')
       })
     }

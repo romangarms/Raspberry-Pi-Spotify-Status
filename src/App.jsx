@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import CurrentlyPlaying from './components/CurrentlyPlaying'
 import NotPlaying from './components/NotPlaying'
 import useSpotifyPolling from './hooks/useSpotifyPolling'
-import { POLLING, API_DELAYS } from './config/constants'
+import { API_RESPONSE_DELAY } from './config/constants'
 import './styles/App.css'
 
 function App() {
@@ -23,7 +23,7 @@ function App() {
   }, [])
 
   // Polling hook for track updates
-  const { forceRefresh, pausePolling } = useSpotifyPolling({
+  const { forceRefresh } = useSpotifyPolling({
     currentTrack,
     setCurrentTrack,
     setIsPlaying,
@@ -35,9 +35,6 @@ function App() {
   })
 
   const handlePlayPause = async () => {
-    // Pause auto-polling to prevent state flickering
-    pausePolling(POLLING.PAUSE_AFTER_ACTION)
-    
     const endpoint = isPlaying ? '/api/pause' : '/api/play'
     
     try {
@@ -53,16 +50,13 @@ function App() {
       setIsPlaying(!isPlaying)
       
       // Trigger refresh after Spotify API updates
-      forceRefresh(API_DELAYS.PLAY_PAUSE)
+      forceRefresh(API_RESPONSE_DELAY)
     } catch (error) {
       console.error('Unable to reach server:', error)
     }
   }
 
   const handleSkip = async () => {
-    // Pause auto-polling to prevent state flickering
-    pausePolling(POLLING.PAUSE_AFTER_SKIP)
-    
     try {
       const response = await fetch('/api/skip', { credentials: 'same-origin' })
       
@@ -73,16 +67,13 @@ function App() {
       }
       
       // Trigger refresh to get new track
-      forceRefresh(API_DELAYS.SKIP)
+      forceRefresh(API_RESPONSE_DELAY)
     } catch (error) {
       console.error('Unable to reach server:', error)
     }
   }
 
   const handleLikeToggle = async () => {
-    // Pause auto-polling to prevent state flickering
-    pausePolling(POLLING.PAUSE_AFTER_ACTION)
-    
     const endpoint = isLiked ? `/api/unlike?id=${currentTrack?.id}` : `/api/like?id=${currentTrack?.id}`
     
     try {
@@ -98,7 +89,7 @@ function App() {
       setIsLiked(!isLiked)
       
       // Trigger refresh to confirm like status
-      forceRefresh(API_DELAYS.LIKE_UNLIKE)
+      forceRefresh(API_RESPONSE_DELAY)
     } catch (error) {
       console.error('Unable to reach server:', error)
     }

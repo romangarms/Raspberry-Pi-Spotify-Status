@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react'
-import { POLLING, API_DELAYS } from '../config/constants'
+import { POLLING, API_RESPONSE_DELAY, SCREEN_SERVER } from '../config/constants'
 
 function useSpotifyPolling({
   currentTrack,
@@ -11,14 +11,9 @@ function useSpotifyPolling({
   screenServerUrl
 }) {
   const intervalRef = useRef(null)
-  const pausedUntilRef = useRef(null)
+  const pollTrackInfoRef = useRef(null)
   
   const pollTrackInfo = useCallback(async (forceRefresh = false) => {
-    // Skip auto-polling if paused
-    if (!forceRefresh && pausedUntilRef.current && Date.now() < pausedUntilRef.current) {
-      return
-    }
-
     try {
       const params = new URLSearchParams({
         id: currentTrack?.id || '',
@@ -89,7 +84,7 @@ function useSpotifyPolling({
 
       // Handle screen server
       if (screenServerUrl) {
-        const endpoint = data.currently_playing ? '/TurnOnScreen' : '/TurnOffScreen'
+        const endpoint = data.currently_playing ? SCREEN_SERVER.TURN_ON_ENDPOINT : SCREEN_SERVER.TURN_OFF_ENDPOINT
         fetch(`${screenServerUrl}${endpoint}`).catch(() => {
           console.log('Screen server not reachable')
         })
@@ -99,25 +94,33 @@ function useSpotifyPolling({
     }
   }, [currentTrack?.id, setCurrentTrack, setIsPlaying, setIsLiked, setProgress, setDuration, screenServerUrl])
 
-  // Pause polling for a specified duration (in milliseconds)
-  const pausePolling = useCallback((duration = POLLING.PAUSE_AFTER_ACTION) => {
-    pausedUntilRef.current = Date.now() + duration
-  }, [])
+  // Store the latest pollTrackInfo in a ref so the interval always uses the current version
+  useEffect(() => {
+    pollTrackInfoRef.current = pollTrackInfo
+  }, [pollTrackInfo])
 
   // Force refresh function to be called after user actions
-  const forceRefresh = useCallback((delay = API_DELAYS.PLAY_PAUSE) => {
+  const forceRefresh = useCallback((delay = API_RESPONSE_DELAY) => {
     // Delay to allow Spotify API to update
     setTimeout(() => {
-      pollTrackInfo(true)
+      if (pollTrackInfoRef.current) {
+        pollTrackInfoRef.current(true)
+      }
     }, delay)
-  }, [pollTrackInfo])
+  }, [])
 
   useEffect(() => {
     // Initial poll
-    pollTrackInfo()
+    if (pollTrackInfoRef.current) {
+      pollTrackInfoRef.current()
+    }
 
-    // Set up interval based on constant
-    intervalRef.current = setInterval(() => pollTrackInfo(), POLLING.INTERVAL)
+    // Set up interval based on constant - use ref to avoid recreating interval
+    intervalRef.current = setInterval(() => {
+      if (pollTrackInfoRef.current) {
+        pollTrackInfoRef.current()
+      }
+    }, POLLING.INTERVAL)
 
     // Cleanup
     return () => {
@@ -125,9 +128,9 @@ function useSpotifyPolling({
         clearInterval(intervalRef.current)
       }
     }
-  }, [pollTrackInfo])
+  }, []) // Empty dependency array - only set up interval once
 
-  return { forceRefresh, pausePolling }
+  return { forceRefresh }
 }
 
 export default useSpotifyPolling
