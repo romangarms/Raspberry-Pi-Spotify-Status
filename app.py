@@ -18,11 +18,17 @@ from spotipy.oauth2 import SpotifyOAuth
 # =============================================================================
 
 # Debug mode - set to True for development
-DEBUG = True
+DEBUG = False
 
 if DEBUG:
     from dotenv import load_dotenv
     load_dotenv()
+    print("\n" + "="*60)
+    print("⚠️  WARNING: Running in DEBUG mode!")
+    print("="*60)
+    print("Debug mode is enabled. This should ONLY be used for local")
+    print("development. Never deploy to production with DEBUG=True!")
+    print("="*60 + "\n")
 
 # App configuration
 app = Flask(__name__)
