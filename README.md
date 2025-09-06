@@ -6,11 +6,11 @@ A web app to display your currently playing song on Spotify. Allows you to skip 
 
 ### Screenshots:
 
-![Always This Late](https://i.imgur.com/iub38zU.jpg)
+![Always This Late](screenshots/always-this-late.png)
 
-![Swim](https://i.imgur.com/HElS7Fv.jpg)
+![Swim](screenshots/swim.png)
 
-![R U Mine?](https://i.imgur.com/p05nO9v.jpg)
+![R U Mine?](screenshots/r-u-mine.png)
 
 ### Implementation:
 I started my project by setting up a basic site to show raw JSON of my Spotify data utilizing [Spotipy](https://github.com/plamere/spotipy), an open source Spotify Python API. Later on, I wrote some javascript to poll the Spotify API every two seconds to check for changes. If the song has changed, the page is refreshed with the new info.
@@ -28,13 +28,14 @@ There's many different ways you can host this webapp. I personally use Fly.io. Y
 Create a Spotify Developer account if you don't have one, and create a new app. You'll need to take note of the Client ID and Client Secret.
 Host the webapp using one of the following 3 options:
   
-#### To use Fly.io (recommended free host):
+#### To use Fly.io (easy-to-use host, no longer free):
   - Download the repo
   - Set up your fly.io account and create a new app
   - Take note of hostname/address your app is hosted at
   - Enter in Client ID, Client Secret, and Redirect URI (which is the address your webapp is hosted at) as environment variables SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET and SPOTIPY_REDIRECT_URI
 #### Hosting locally (for debugging):
   - Install python3 and the dependencies for this project on your computer. Use your computer's environment variables to set the Client ID, Client Secret, and Redirect URI. The redirect URI will be 'http://127.0.0.1:5000' for local testing.
+  - There is a debug mode available that will read your environment variables from a .env file
 #### To host elsewhere:
   - You can host on anything that can run Python3 and set environment variables. Just know the address you're hosting at, that will be your Redirect URI.
     
