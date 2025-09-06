@@ -6,6 +6,7 @@ A Flask application that displays currently playing Spotify tracks with a React 
 import os
 import sys
 import json
+import argparse
 from datetime import timedelta
 from http.client import HTTPException
 
@@ -17,8 +18,13 @@ from spotipy.oauth2 import SpotifyOAuth
 # CONFIGURATION
 # =============================================================================
 
-# Debug mode - set to True for development
-DEBUG = False
+# Parse command line arguments
+parser = argparse.ArgumentParser(description='Spotify Status Display App')
+parser.add_argument('--debug', action='store_true', help='Enable debug mode for development')
+args = parser.parse_args()
+
+# Debug mode - set via command line argument
+DEBUG = args.debug
 
 if DEBUG:
     from dotenv import load_dotenv

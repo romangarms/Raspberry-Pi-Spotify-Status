@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "bash -c 'vite build --watch & source .venv/bin/activate && python3 app.py'",
+    "dev": "bash -c 'vite build --watch & source .venv/bin/activate && python3 app.py --debug'",
     "build": "vite build",
     "preview": "npm run build && npm run start",
     "start": "source .venv/bin/activate && python3 app.py"
