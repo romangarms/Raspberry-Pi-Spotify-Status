@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react'
 import CurrentlyPlaying from './components/CurrentlyPlaying'
 import NotPlaying from './components/NotPlaying'
 import useSpotifyPolling from './hooks/useSpotifyPolling'
-import { API_RESPONSE_DELAY } from './config/constants'
 import './styles/App.css'
 
 function App() {
@@ -23,7 +22,7 @@ function App() {
   }, [])
 
   // Polling hook for track updates
-  const { forceRefresh } = useSpotifyPolling({
+  useSpotifyPolling({
     currentTrack,
     setCurrentTrack,
     setIsPlaying,
@@ -47,9 +46,6 @@ function App() {
       
       // Optimistic UI update
       setIsPlaying(!isPlaying)
-      
-      // Trigger refresh after Spotify API updates
-      forceRefresh(API_RESPONSE_DELAY)
     } catch (error) {
       console.error('Unable to reach server:', error)
     }
@@ -64,9 +60,6 @@ function App() {
         window.location.href = '/'
         return
       }
-      
-      // Trigger refresh to get new track
-      forceRefresh(API_RESPONSE_DELAY)
     } catch (error) {
       console.error('Unable to reach server:', error)
     }
@@ -86,9 +79,6 @@ function App() {
       
       // Optimistic UI update
       setIsLiked(!isLiked)
-      
-      // Trigger refresh to confirm like status
-      forceRefresh(API_RESPONSE_DELAY)
     } catch (error) {
       console.error('Unable to reach server:', error)
     }

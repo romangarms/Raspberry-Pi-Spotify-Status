@@ -3,9 +3,6 @@ export const POLLING = {
   INTERVAL: 1000,  // 1 second polling interval (ms)
 }
 
-// Spotify API response delay - time to wait for API to update after actions
-export const API_RESPONSE_DELAY = 300  // milliseconds
-
 // Progress bar animation
 export const PROGRESS_BAR = {
   TRANSITION_DURATION: 1000,  // Match polling interval (ms)

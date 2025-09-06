@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react'
-import { POLLING, API_RESPONSE_DELAY } from '../config/constants'
+import { POLLING } from '../config/constants'
 
 function useSpotifyPolling({
   currentTrack,
@@ -7,7 +7,8 @@ function useSpotifyPolling({
   setIsPlaying,
   setIsLiked,
   setProgress,
-  setDuration
+  setDuration,
+  ignoreAutoRefresh
 }) {
   const intervalRef = useRef(null)
   const pollTrackInfoRef = useRef(null)
@@ -90,16 +91,6 @@ function useSpotifyPolling({
     pollTrackInfoRef.current = pollTrackInfo
   }, [pollTrackInfo])
 
-  // Force refresh function to be called after user actions
-  const forceRefresh = useCallback((delay = API_RESPONSE_DELAY) => {
-    // Delay to allow Spotify API to update
-    setTimeout(() => {
-      if (pollTrackInfoRef.current) {
-        pollTrackInfoRef.current(true)
-      }
-    }, delay)
-  }, [])
-
   useEffect(() => {
     // Initial poll
     if (pollTrackInfoRef.current) {
@@ -121,7 +112,7 @@ function useSpotifyPolling({
     }
   }, []) // Empty dependency array - only set up interval once
 
-  return { forceRefresh }
+  return {}
 }
 
 export default useSpotifyPolling
