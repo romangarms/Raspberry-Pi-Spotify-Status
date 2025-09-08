@@ -1,27 +1,27 @@
 import { useEffect } from 'react'
-import { SCREEN_SERVER } from '../config/constants'
+import ScreenOffNotification from './ScreenOffNotification'
+import useScreenControl from '../hooks/useScreenControl'
 import '../styles/NotPlaying.css'
 
 function NotPlaying({ screenServerUrl }) {
-  useEffect(() => {
-    // Turn off screen when nothing is playing
-    if (screenServerUrl) {
-      fetch(`${screenServerUrl}${SCREEN_SERVER.TURN_OFF_ENDPOINT}`).catch(() => {
-        console.log('Screen server not reachable')
-      })
-    }
+  // Use screen control hook with isPlaying=false to trigger countdown
+  const screenOffCountdown = useScreenControl(false, screenServerUrl)
 
+  useEffect(() => {
     // Reset body styles
     document.body.style.backgroundColor = ''
     document.body.style.color = ''
-  }, [screenServerUrl])
+  }, [])
 
   return (
-    <div id="outer">
-      <div id="center">
-        <h1 className="not-playing">Nothing is currently playing.</h1>
+    <>
+      <div id="outer">
+        <div id="center">
+          <h1 className="not-playing">Nothing is currently playing.</h1>
+        </div>
       </div>
-    </div>
+      <ScreenOffNotification secondsRemaining={screenOffCountdown} />
+    </>
   )
 }
 

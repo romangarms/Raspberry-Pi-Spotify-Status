@@ -12,13 +12,13 @@ function App() {
   const [progress, setProgress] = useState(0)
   const [duration, setDuration] = useState(0)
   const ignoreAutoRefresh = useRef(false)
-  const screenServerUrl = useRef(null)
+  const [screenServerUrl, setScreenServerUrl] = useState(null)
 
   // Get screen server URL from environment
   useEffect(() => {
     // In production, this would come from Flask template
     // For development, we'll set it to null
-    screenServerUrl.current = window.SCREEN_SERVER_URL || null
+    setScreenServerUrl(window.SCREEN_SERVER_URL || null)
   }, [])
 
   // Polling hook for track updates
@@ -91,7 +91,7 @@ function App() {
   }
 
   if (!currentTrack) {
-    return <NotPlaying screenServerUrl={screenServerUrl.current} />
+    return <NotPlaying screenServerUrl={screenServerUrl} />
   }
 
   return (
@@ -104,7 +104,7 @@ function App() {
       onPlayPause={handlePlayPause}
       onSkip={handleSkip}
       onLikeToggle={handleLikeToggle}
-      screenServerUrl={screenServerUrl.current}
+      screenServerUrl={screenServerUrl}
     />
   )
 }
