@@ -1,25 +1,77 @@
 {% extends "layout.html" %}
 
-{%block title %}
-<title>Error</title>
-{%endblock%}
+{% block title %}
+<title>{{ error_message }} - Spotify Status</title>
+{% endblock %}
 
 {% block main %}
-<!--wooo nothing is playing rn-->
 <div id="outer">
-    <div id="center">
-        <h1 class="not-playing">Error Encountered</h1>
-        <h2 class="text">{{error}}</h2>
-
-        <a onclick="reload()" id="reload-button" class="btn btn-default media-control-button"><i
-                class="material-icons">refresh</i></a>
+    <div id="error-container">
+        <!-- Error Icon based on error type -->
+        <div class="error-icon">
+            {% if error_code == 404 %}
+                <i class="material-icons icon-large">search_off</i>
+            {% elif error_code == 401 %}
+                <i class="material-icons icon-large">lock</i>
+            {% elif error_code >= 500 %}
+                <i class="material-icons icon-large">error_outline</i>
+            {% else %}
+                <i class="material-icons icon-large">warning</i>
+            {% endif %}
+        </div>
+        
+        <!-- Error Message -->
+        <h1 class="error-title">{{ error_message }}</h1>
+        
+        <!-- Error Description -->
+        {% if error_description %}
+        <p class="error-description">{{ error_description }}</p>
+        {% endif %}
+        
+        <!-- Action Buttons based on error type -->
+        <div class="error-actions">
+            {% if error_code == 404 %}
+                <!-- 404: Go Home button only -->
+                <a href="/" class="btn btn-primary">
+                    <i class="material-icons">home</i>
+                    <span>Go Home</span>
+                </a>
+                
+            {% elif error_code == 401 %}
+                <!-- 401: Sign In button -->
+                <a href="/" class="btn btn-primary">
+                    <i class="material-icons">login</i>
+                    <span>Sign In</span>
+                </a>
+                
+            {% elif error_code >= 500 %}
+                <!-- 500+ Server errors: Refresh and Home buttons -->
+                <button onclick="location.reload()" class="btn btn-secondary">
+                    <i class="material-icons">refresh</i>
+                    <span>Try Again</span>
+                </button>
+                <a href="/" class="btn btn-primary">
+                    <i class="material-icons">home</i>
+                    <span>Go Home</span>
+                </a>
+                
+            {% else %}
+                <!-- Other errors: Home and Refresh -->
+                <a href="/" class="btn btn-primary">
+                    <i class="material-icons">home</i>
+                    <span>Go Home</span>
+                </a>
+                <button onclick="location.reload()" class="btn btn-secondary">
+                    <i class="material-icons">refresh</i>
+                    <span>Refresh</span>
+                </button>
+            {% endif %}
+        </div>
+        
+        <!-- Error code for debugging (small text) -->
+        <div class="error-code">
+            Error {{ error_code }}
+        </div>
     </div>
 </div>
-
-<script>
-    function reload() {
-        location.reload();
-    }
-</script>
-
 {% endblock %}

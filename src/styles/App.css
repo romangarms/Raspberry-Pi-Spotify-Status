@@ -1,0 +1,35 @@
+/* Main container styles */
+#outer {
+  width: 100%;
+  display: flex;
+  padding: 2%;
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+#left {
+  width: 50%;
+  float: left;
+}
+
+#right {
+  float: right;
+  width: 50%;
+  flex-grow: 1;
+}
+
+#center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100vh;
+}
+
+.center {
+  display: inline-block;
+  margin: 0 auto;
+  text-align: center;
+}

@@ -171,3 +171,7 @@ cython_debug/
 #fly.io
 fly.toml
 .bash_profile
+
+#node/react
+node_modules/
+static/react-build/
