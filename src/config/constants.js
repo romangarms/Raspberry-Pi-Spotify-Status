@@ -1,11 +1,11 @@
 // Polling configuration
 export const POLLING = {
-  INTERVAL: 1000,  // 1 second polling interval (ms)
+  INTERVAL: 2000,  // 2 second polling interval (ms)
 }
 
 // Progress bar animation
 export const PROGRESS_BAR = {
-  TRANSITION_DURATION: 1000,  // Match polling interval (ms)
+  TRANSITION_DURATION: 2000,  // Match polling interval (ms)
   COLOR_TRANSITION: 300,  // Color change transition (ms)
 }
 
