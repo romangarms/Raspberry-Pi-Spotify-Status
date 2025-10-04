@@ -203,6 +203,11 @@ def sign_out():
     session.clear()
     return redirect("/")
 
+@app.route("/health")
+def health():
+    """Health check endpoint for monitoring (no auth required)."""
+    return jsonify({"status": "ok"}), 200
+
 # =============================================================================
 # STATIC FILE SERVING
 # =============================================================================
