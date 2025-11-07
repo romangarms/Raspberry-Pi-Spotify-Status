@@ -109,12 +109,25 @@ function CurrentlyPlaying({
       setTextColor([0, 0, 0])
     }
 
-    if (imgRef.current) {
-      if (imgRef.current.complete) {
+    const imgElement = imgRef.current
+
+    if (imgElement) {
+      if (imgElement.complete) {
         extractColors()
       } else {
-        imgRef.current.onload = extractColors
-        imgRef.current.onerror = handleImageError
+        // Use addEventListener with { once: true } to auto-remove after firing
+        // This prevents event listener accumulation and memory leaks
+        imgElement.addEventListener('load', extractColors, { once: true })
+        imgElement.addEventListener('error', handleImageError, { once: true })
+      }
+    }
+
+    // Cleanup function to remove event listeners if component unmounts
+    // or if displayTrack changes before image loads
+    return () => {
+      if (imgElement) {
+        imgElement.removeEventListener('load', extractColors)
+        imgElement.removeEventListener('error', handleImageError)
       }
     }
   }, [displayTrack?.artUrl])
