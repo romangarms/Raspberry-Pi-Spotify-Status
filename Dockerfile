@@ -1,7 +1,7 @@
 # Multi-stage build for Flask + React app
 
 # Stage 1: Build React frontend
-FROM node:18-alpine AS frontend-builder
+FROM node:22-alpine AS frontend-builder
 
 WORKDIR /app
 
