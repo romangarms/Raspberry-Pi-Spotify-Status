@@ -22,7 +22,6 @@ function CurrentlyPlaying({
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [displayTrack, setDisplayTrack] = useState(track)
   const imgRef = useRef(null)
-  const colorThiefRef = useRef(new ColorThief())
   const lastTrackIdRef = useRef(track?.id)
   
   // Use the screen control hook
@@ -55,9 +54,12 @@ function CurrentlyPlaying({
     const extractColors = () => {
       if (!imgRef.current || !imgRef.current.complete) return
 
+      // Create a new ColorThief instance for this extraction to prevent memory leaks
+      let colorThief = null
+
       try {
         const img = imgRef.current
-        const colorThief = colorThiefRef.current
+        colorThief = new ColorThief()
 
         // Get dominant color for background
         const bgColor = colorThief.getColor(img)
@@ -65,7 +67,7 @@ function CurrentlyPlaying({
 
         // Get palette for text color selection
         const palette = colorThief.getPalette(img, 8)
-        
+
         // Calculate average brightness
         const avg = (color) => (color[0] + color[1] + color[2]) / 3
         const bgAvg = avg(bgColor)
@@ -91,7 +93,20 @@ function CurrentlyPlaying({
         setTextColor(bestTextColor)
       } catch (error) {
         console.error('Error extracting colors:', error)
+        // Fall back to default colors on error
+        setBackgroundColor([255, 255, 255])
+        setTextColor([0, 0, 0])
+      } finally {
+        // Dispose of ColorThief instance to allow garbage collection
+        colorThief = null
       }
+    }
+
+    const handleImageError = () => {
+      console.error('Error loading album artwork')
+      // Fall back to default colors on image load failure
+      setBackgroundColor([255, 255, 255])
+      setTextColor([0, 0, 0])
     }
 
     if (imgRef.current) {
@@ -99,6 +114,7 @@ function CurrentlyPlaying({
         extractColors()
       } else {
         imgRef.current.onload = extractColors
+        imgRef.current.onerror = handleImageError
       }
     }
   }, [displayTrack?.artUrl])
