@@ -23,7 +23,6 @@ function CurrentlyPlaying({
   const [displayTrack, setDisplayTrack] = useState(track)
   const imgRef = useRef(null)
   const lastTrackIdRef = useRef(track?.id)
-  const colorThiefRef = useRef(null)
   
   // Use the screen control hook
   const screenOffCountdown = useScreenControl(isPlaying, screenServerUrl)
@@ -55,15 +54,11 @@ function CurrentlyPlaying({
     const extractColors = () => {
       if (!imgRef.current || !imgRef.current.complete) return
 
-      // Reuse the same ColorThief instance to prevent DOM node leaks
-      // Only create it once and keep it in the ref
-      if (!colorThiefRef.current) {
-        colorThiefRef.current = new ColorThief()
-      }
-
       try {
         const img = imgRef.current
-        const colorThief = colorThiefRef.current
+        // Create a new ColorThief instance each time and let it be garbage collected
+        // This should allow better cleanup than reusing a single instance
+        const colorThief = new ColorThief()
 
         // Get dominant color for background
         const bgColor = colorThief.getColor(img)
@@ -133,11 +128,18 @@ function CurrentlyPlaying({
     }
   }, [displayTrack?.artUrl])
 
-  // Apply colors to body
+  // Apply colors to body and save to sessionStorage for seamless page refreshes
   useEffect(() => {
-    document.body.style.backgroundColor = `rgb(${backgroundColor.join(',')})`
-    document.body.style.color = `rgb(${textColor.join(',')})`
-    
+    const bgColorString = `rgb(${backgroundColor.join(',')})`
+    const textColorString = `rgb(${textColor.join(',')})`
+
+    document.body.style.backgroundColor = bgColorString
+    document.body.style.color = textColorString
+
+    // Save colors to sessionStorage to prevent white flash on page refresh
+    sessionStorage.setItem('spotify-bg-color', bgColorString)
+    sessionStorage.setItem('spotify-text-color', textColorString)
+
     return () => {
       document.body.style.backgroundColor = ''
       document.body.style.color = ''

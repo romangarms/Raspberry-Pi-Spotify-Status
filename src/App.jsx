@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'
 import CurrentlyPlaying from './components/CurrentlyPlaying'
 import NotPlaying from './components/NotPlaying'
+import RefreshWarning from './components/RefreshWarning'
 import useSpotifyPolling from './hooks/useSpotifyPolling'
+import useAutoRefresh from './hooks/useAutoRefresh'
 import './styles/App.css'
 
 function App() {
@@ -11,6 +13,7 @@ function App() {
   const [isLiked, setIsLiked] = useState(false)
   const [progress, setProgress] = useState(0)
   const [duration, setDuration] = useState(0)
+  const [isInitialLoad, setIsInitialLoad] = useState(true)
   const ignoreAutoRefresh = useRef(false)
   const [screenServerUrl, setScreenServerUrl] = useState(null)
 
@@ -29,8 +32,12 @@ function App() {
     setIsLiked,
     setProgress,
     setDuration,
-    ignoreAutoRefresh
+    ignoreAutoRefresh,
+    setIsInitialLoad
   })
+
+  // Auto-refresh hook for memory management
+  const { secondsRemaining, refreshReason } = useAutoRefresh(currentTrack)
 
   const handlePlayPause = async () => {
     const endpoint = isPlaying ? '/api/pause' : '/api/play'
@@ -90,20 +97,30 @@ function App() {
     return null
   }
 
-  return !currentTrack ? (
-    <NotPlaying screenServerUrl={screenServerUrl} />
-  ) : (
-    <CurrentlyPlaying
-      track={currentTrack}
-      isPlaying={isPlaying}
-      isLiked={isLiked}
-      progress={progress}
-      duration={duration}
-      onPlayPause={handlePlayPause}
-      onSkip={handleSkip}
-      onLikeToggle={handleLikeToggle}
-      screenServerUrl={screenServerUrl}
-    />
+  // Don't show anything during initial load to prevent flash of "Not Playing"
+  if (isInitialLoad) {
+    return null
+  }
+
+  return (
+    <>
+      {!currentTrack ? (
+        <NotPlaying screenServerUrl={screenServerUrl} />
+      ) : (
+        <CurrentlyPlaying
+          track={currentTrack}
+          isPlaying={isPlaying}
+          isLiked={isLiked}
+          progress={progress}
+          duration={duration}
+          onPlayPause={handlePlayPause}
+          onSkip={handleSkip}
+          onLikeToggle={handleLikeToggle}
+          screenServerUrl={screenServerUrl}
+        />
+      )}
+      <RefreshWarning secondsRemaining={secondsRemaining} reason={refreshReason} />
+    </>
   )
 }
 

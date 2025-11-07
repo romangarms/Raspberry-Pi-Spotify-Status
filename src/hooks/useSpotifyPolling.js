@@ -8,10 +8,12 @@ function useSpotifyPolling({
   setIsLiked,
   setProgress,
   setDuration,
-  ignoreAutoRefresh
+  ignoreAutoRefresh,
+  setIsInitialLoad
 }) {
   const intervalRef = useRef(null)
   const pollTrackInfoRef = useRef(null)
+  const hasLoadedOnce = useRef(false)
   
   const pollTrackInfo = useCallback(async (forceRefresh = false) => {
     try {
@@ -83,8 +85,14 @@ function useSpotifyPolling({
       }
     } catch (error) {
       console.error('Error polling track info:', error)
+    } finally {
+      // Mark initial load as complete after first poll (success or failure)
+      if (!hasLoadedOnce.current && setIsInitialLoad) {
+        hasLoadedOnce.current = true
+        setIsInitialLoad(false)
+      }
     }
-  }, [currentTrack?.id, setCurrentTrack, setIsPlaying, setIsLiked, setProgress, setDuration])
+  }, [currentTrack?.id, setCurrentTrack, setIsPlaying, setIsLiked, setProgress, setDuration, setIsInitialLoad])
 
   // Store the latest pollTrackInfo in a ref so the interval always uses the current version
   useEffect(() => {

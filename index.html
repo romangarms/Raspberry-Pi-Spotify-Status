@@ -8,6 +8,30 @@
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+      /* Prevent white flash on page load/refresh by setting default background */
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #1a1a1a; /* Default dark gray, will be overridden by stored color */
+        color: #ffffff;
+      }
+    </style>
+    <script>
+      // Restore background color from sessionStorage immediately to prevent white flash
+      (function() {
+        const savedBgColor = sessionStorage.getItem('spotify-bg-color');
+        const savedTextColor = sessionStorage.getItem('spotify-text-color');
+        if (savedBgColor) {
+          document.documentElement.style.backgroundColor = savedBgColor;
+          document.body.style.backgroundColor = savedBgColor;
+        }
+        if (savedTextColor) {
+          document.documentElement.style.color = savedTextColor;
+          document.body.style.color = savedTextColor;
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
