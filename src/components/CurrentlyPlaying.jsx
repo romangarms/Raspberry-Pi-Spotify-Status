@@ -23,6 +23,7 @@ function CurrentlyPlaying({
   const [displayTrack, setDisplayTrack] = useState(track)
   const imgRef = useRef(null)
   const lastTrackIdRef = useRef(track?.id)
+  const colorThiefRef = useRef(null)
   
   // Use the screen control hook
   const screenOffCountdown = useScreenControl(isPlaying, screenServerUrl)
@@ -54,12 +55,15 @@ function CurrentlyPlaying({
     const extractColors = () => {
       if (!imgRef.current || !imgRef.current.complete) return
 
-      // Create a new ColorThief instance for this extraction to prevent memory leaks
-      let colorThief = null
+      // Reuse the same ColorThief instance to prevent DOM node leaks
+      // Only create it once and keep it in the ref
+      if (!colorThiefRef.current) {
+        colorThiefRef.current = new ColorThief()
+      }
 
       try {
         const img = imgRef.current
-        colorThief = new ColorThief()
+        const colorThief = colorThiefRef.current
 
         // Get dominant color for background
         const bgColor = colorThief.getColor(img)
@@ -96,9 +100,6 @@ function CurrentlyPlaying({
         // Fall back to default colors on error
         setBackgroundColor([255, 255, 255])
         setTextColor([0, 0, 0])
-      } finally {
-        // Dispose of ColorThief instance to allow garbage collection
-        colorThief = null
       }
     }
 
