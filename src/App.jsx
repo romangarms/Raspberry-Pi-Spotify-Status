@@ -90,11 +90,9 @@ function App() {
     return null
   }
 
-  if (!currentTrack) {
-    return <NotPlaying screenServerUrl={screenServerUrl} />
-  }
-
-  return (
+  return !currentTrack ? (
+    <NotPlaying screenServerUrl={screenServerUrl} />
+  ) : (
     <CurrentlyPlaying
       track={currentTrack}
       isPlaying={isPlaying}
