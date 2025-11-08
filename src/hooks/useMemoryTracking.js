@@ -15,6 +15,9 @@ function useMemoryTracking() {
     // Get the global memory monitor instance (already running)
     monitorRef.current = getGlobalMemoryMonitor()
 
+    // Force initial render to show existing snapshots
+    forceUpdate({})
+
     // Subscribe to updates
     const unsubscribe = monitorRef.current.subscribe(() => {
       // Force re-render when monitor updates
