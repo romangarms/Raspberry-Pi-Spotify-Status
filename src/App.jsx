@@ -7,7 +7,6 @@ import useAutoRefresh from './hooks/useAutoRefresh'
 import './styles/App.css'
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(true)
   const [currentTrack, setCurrentTrack] = useState(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
@@ -37,7 +36,7 @@ function App() {
   })
 
   // Auto-refresh hook for memory management
-  const { secondsRemaining, refreshReason } = useAutoRefresh(currentTrack)
+  const { secondsRemaining, refreshReason } = useAutoRefresh()
 
   const handlePlayPause = async () => {
     const endpoint = isPlaying ? '/api/pause' : '/api/play'
@@ -89,12 +88,6 @@ function App() {
     } catch (error) {
       console.error('Unable to reach server:', error)
     }
-  }
-
-  if (!isAuthenticated) {
-    // Handle authentication redirect
-    window.location.href = '/'
-    return null
   }
 
   // Don't show anything during initial load to prevent flash of "Not Playing"

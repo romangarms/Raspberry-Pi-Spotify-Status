@@ -3,41 +3,17 @@ import { AUTO_REFRESH } from '../config/constants'
 import { getGlobalMemoryMonitor } from '../utils/memoryMonitor'
 
 /**
- * Hook for automatic page refresh based on memory usage or track count
+ * Hook for automatic page refresh based on memory usage
  * Prevents memory leaks by refreshing before browser crashes
  * Also ensures kiosk clients get server updates automatically
  *
- * @param {Object} currentTrack - Current track object (to detect track changes)
  * @returns {Object} - { secondsRemaining, refreshReason }
  */
-function useAutoRefresh(currentTrack) {
+function useAutoRefresh() {
   const [secondsRemaining, setSecondsRemaining] = useState(0)
   const [refreshReason, setRefreshReason] = useState('')
-  const lastTrackIdRef = useRef(null)
-  const trackCountRef = useRef(0)
   const countdownIntervalRef = useRef(null)
   const memoryCheckIntervalRef = useRef(null)
-
-  // Track number of tracks played (fallback mechanism)
-  useEffect(() => {
-    if (!AUTO_REFRESH.ENABLED) return
-
-    if (currentTrack?.id && currentTrack.id !== lastTrackIdRef.current) {
-      lastTrackIdRef.current = currentTrack.id
-      trackCountRef.current += 1
-
-      console.log(`Track count: ${trackCountRef.current}/${AUTO_REFRESH.TRACK_FALLBACK_COUNT}`)
-
-      // Fallback: Check if track count exceeded (only if memory API unavailable)
-      const memoryMonitor = getGlobalMemoryMonitor()
-      const memoryUsage = memoryMonitor.getMemoryUsage()
-
-      if (!memoryUsage && trackCountRef.current >= AUTO_REFRESH.TRACK_FALLBACK_COUNT) {
-        console.log('Track count threshold reached (memory API unavailable)')
-        triggerRefresh('Track limit reached')
-      }
-    }
-  }, [currentTrack?.id])
 
   // Check memory usage periodically
   useEffect(() => {
@@ -46,11 +22,6 @@ function useAutoRefresh(currentTrack) {
     const checkMemoryUsage = () => {
       const memoryMonitor = getGlobalMemoryMonitor()
       const memoryUsage = memoryMonitor.getMemoryUsage()
-
-      if (!memoryUsage) {
-        console.log('Memory API not available, using track-based fallback')
-        return
-      }
 
       const usagePercent = parseFloat(memoryUsage.percentage)
       const threshold = AUTO_REFRESH.MEMORY_THRESHOLD_PERCENT

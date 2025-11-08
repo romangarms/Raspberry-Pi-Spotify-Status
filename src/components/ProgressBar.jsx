@@ -20,27 +20,33 @@ function ProgressBar({ progress, duration, backgroundColor, textColor }) {
       return
     }
     
+    // Cancel any existing animation before starting new one
+    // This prevents RAF accumulation during rapid track changes
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current)
+    }
+
     // Normal playback - animate smoothly
     const animate = () => {
       setDisplayedPercentage(current => {
         const diff = targetPercentage - current
-        
+
         // If we're very close, just set it exactly
         if (Math.abs(diff) < 0.1) {
           previousTargetRef.current = targetPercentage
           return targetPercentage
         }
-        
+
         // Calculate animation speed to reach target before next update
         // We want to reach the target in about 1 second (matching polling interval)
         const animationSpeed = diff / 60 // Assuming 60fps
-        
+
         return current + animationSpeed
       })
-      
+
       animationFrameRef.current = requestAnimationFrame(animate)
     }
-    
+
     // Start animation
     animationFrameRef.current = requestAnimationFrame(animate)
     

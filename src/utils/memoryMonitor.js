@@ -6,7 +6,7 @@
 class MemoryMonitor {
   constructor() {
     this.snapshots = []
-    this.maxSnapshots = 60 // Keep last 60 minutes of data
+    this.maxSnapshots = 30 // Keep last 30 minutes of data (reduced from 60 to save memory)
     this.listeners = new Set()
     this.eventListenerCount = 0
     this.intervalTimerCount = 0
@@ -86,9 +86,9 @@ class MemoryMonitor {
 
     this.snapshots.push(snapshot)
 
-    // Keep only the most recent snapshots
-    if (this.snapshots.length > this.maxSnapshots) {
-      this.snapshots = this.snapshots.slice(-this.maxSnapshots)
+    // Keep only the most recent snapshots - shift oldest to avoid creating new arrays
+    while (this.snapshots.length > this.maxSnapshots) {
+      this.snapshots.shift()
     }
 
     this.notifyListeners()
@@ -96,21 +96,18 @@ class MemoryMonitor {
   }
 
   /**
-   * Get current memory usage (Chrome/Chromium only)
+   * Get current memory usage (Chrome/Chromium/Firefox)
    */
   getMemoryUsage() {
-    if (performance.memory) {
-      return {
-        usedJSHeapSize: performance.memory.usedJSHeapSize,
-        totalJSHeapSize: performance.memory.totalJSHeapSize,
-        jsHeapSizeLimit: performance.memory.jsHeapSizeLimit,
-        usedMB: (performance.memory.usedJSHeapSize / 1048576).toFixed(2),
-        totalMB: (performance.memory.totalJSHeapSize / 1048576).toFixed(2),
-        limitMB: (performance.memory.jsHeapSizeLimit / 1048576).toFixed(2),
-        percentage: ((performance.memory.usedJSHeapSize / performance.memory.jsHeapSizeLimit) * 100).toFixed(1)
-      }
+    return {
+      usedJSHeapSize: performance.memory.usedJSHeapSize,
+      totalJSHeapSize: performance.memory.totalJSHeapSize,
+      jsHeapSizeLimit: performance.memory.jsHeapSizeLimit,
+      usedMB: (performance.memory.usedJSHeapSize / 1048576).toFixed(2),
+      totalMB: (performance.memory.totalJSHeapSize / 1048576).toFixed(2),
+      limitMB: (performance.memory.jsHeapSizeLimit / 1048576).toFixed(2),
+      percentage: ((performance.memory.usedJSHeapSize / performance.memory.jsHeapSizeLimit) * 100).toFixed(1)
     }
-    return null
   }
 
   /**
@@ -137,10 +134,6 @@ class MemoryMonitor {
 
     const oldest = this.snapshots[0]
     const newest = this.snapshots[this.snapshots.length - 1]
-
-    if (!oldest.memory || !newest.memory) {
-      return 0
-    }
 
     const timeDiffMs = newest.timestamp - oldest.timestamp
     const timeDiffHours = timeDiffMs / (1000 * 60 * 60)
@@ -184,14 +177,6 @@ class MemoryMonitor {
   getHealthStatus() {
     const latest = this.getLatestSnapshot()
     const growthRate = parseFloat(this.getMemoryGrowthRate())
-
-    if (!latest.memory) {
-      return {
-        status: 'unknown',
-        message: 'Memory API not available',
-        color: 'gray'
-      }
-    }
 
     const percentage = parseFloat(latest.memory.percentage)
 

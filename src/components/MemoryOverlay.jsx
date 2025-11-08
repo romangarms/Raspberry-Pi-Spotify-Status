@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useMemo } from 'react'
 import useMemoryTracking from '../hooks/useMemoryTracking'
 
 function MemoryOverlay({ onClose }) {
@@ -24,6 +24,13 @@ function MemoryOverlay({ onClose }) {
   // Auto-scroll to bottom when new data arrives
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [snapshots])
+
+  // Memoize recent snapshots to prevent recreating DOM elements on every render
+  // Limit to last 15 to reduce memory and improve performance
+  const recentSnapshots = useMemo(() => {
+    const MAX_DISPLAY_SNAPSHOTS = 15
+    return snapshots.slice(-MAX_DISPLAY_SNAPSHOTS).reverse()
   }, [snapshots])
 
   const formatUptime = (ms) => {
@@ -233,12 +240,12 @@ function MemoryOverlay({ onClose }) {
             marginBottom: '20px'
           }}
         >
-          <h3 style={{ marginTop: 0 }}>Snapshot History</h3>
+          <h3 style={{ marginTop: 0 }}>Snapshot History (Last 15)</h3>
           <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-            {snapshots.length === 0 ? (
+            {recentSnapshots.length === 0 ? (
               <div style={{ color: '#888' }}>No snapshots yet. Waiting for data...</div>
             ) : (
-              snapshots.slice().reverse().map((snapshot, index) => {
+              recentSnapshots.map((snapshot) => {
                 const time = new Date(snapshot.timestamp).toLocaleTimeString()
                 return (
                   <div

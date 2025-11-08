@@ -21,11 +21,26 @@ function CurrentlyPlaying({
   const [textColor, setTextColor] = useState([0, 0, 0])
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [displayTrack, setDisplayTrack] = useState(track)
+  const [cacheBustVersion, setCacheBustVersion] = useState(0)
   const imgRef = useRef(null)
   const lastTrackIdRef = useRef(track?.id)
+  const appStartTimeRef = useRef(Date.now())
   
   // Use the screen control hook
   const screenOffCountdown = useScreenControl(isPlaying, screenServerUrl)
+
+  // Periodically bust image cache to prevent memory accumulation
+  useEffect(() => {
+    const CACHE_BUST_INTERVAL = 60 * 60 * 1000 // 1 hour in milliseconds
+
+    const interval = setInterval(() => {
+      const uptime = Date.now() - appStartTimeRef.current
+      console.log(`Cache bust triggered after ${Math.floor(uptime / 60000)} minutes uptime`)
+      setCacheBustVersion(prev => prev + 1)
+    }, CACHE_BUST_INTERVAL)
+
+    return () => clearInterval(interval)
+  }, [])
 
   // Handle track changes with fade transition
   useEffect(() => {
@@ -153,7 +168,7 @@ function CurrentlyPlaying({
         <div id="left">
           <img
             ref={imgRef}
-            src={displayTrack.artUrl}
+            src={`${displayTrack.artUrl}${cacheBustVersion > 0 ? `?v=${cacheBustVersion}` : ''}`}
             crossOrigin="anonymous"
             id="album-art"
             alt="Album Art"

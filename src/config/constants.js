@@ -20,7 +20,6 @@ export const SCREEN_SERVER = {
 export const AUTO_REFRESH = {
   ENABLED: true,  // Enable automatic page refresh to prevent memory leaks
   MEMORY_THRESHOLD_PERCENT: 50,  // Refresh when memory usage exceeds this % of heap limit
-  TRACK_FALLBACK_COUNT: 20,  // Fallback: refresh after this many tracks if memory API unavailable
   WARNING_SECONDS: 5,  // Show countdown warning for this many seconds before refresh
   CHECK_INTERVAL: 60000,  // Check memory usage every 60 seconds (ms)
 }
