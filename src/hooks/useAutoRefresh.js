@@ -26,8 +26,6 @@ function useAutoRefresh() {
       const usagePercent = parseFloat(memoryUsage.percentage)
       const threshold = AUTO_REFRESH.MEMORY_THRESHOLD_PERCENT
 
-      console.log(`Memory usage: ${usagePercent}% (threshold: ${threshold}%)`)
-
       if (usagePercent >= threshold) {
         console.log(`Memory threshold exceeded: ${usagePercent}% >= ${threshold}%`)
         triggerRefresh(`Memory at ${usagePercent}%`)

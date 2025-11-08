@@ -4,7 +4,7 @@ import useMemoryTracking from '../hooks/useMemoryTracking'
 function MemoryOverlay({ onClose }) {
   const bottomRef = useRef(null)
 
-  // Track memory with snapshots every 60 seconds
+  // Connect to global memory monitor (runs continuously in background)
   const {
     currentSnapshot,
     snapshots,
@@ -19,7 +19,7 @@ function MemoryOverlay({ onClose }) {
     uptime,
     downloadReport,
     reset
-  } = useMemoryTracking(60)
+  } = useMemoryTracking()
 
   // Auto-scroll to bottom when new data arrives
   useEffect(() => {
@@ -293,11 +293,11 @@ function MemoryOverlay({ onClose }) {
           }}
         >
           <h3 style={{ marginTop: 0 }}>Snapshot History</h3>
-          <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+          <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column-reverse' }}>
             {snapshots.length === 0 ? (
               <div style={{ color: '#888' }}>No snapshots yet. Waiting for data...</div>
             ) : (
-              snapshots.slice().reverse().map((snapshot) => {
+              snapshots.map((snapshot) => {
                 const time = new Date(snapshot.timestamp).toLocaleTimeString()
                 return (
                   <div

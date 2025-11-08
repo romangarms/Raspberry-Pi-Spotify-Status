@@ -3,22 +3,17 @@ import { getGlobalMemoryMonitor } from '../utils/memoryMonitor'
 
 /**
  * Hook for tracking memory usage in React components
- * Takes automatic snapshots at regular intervals
+ * Connects to the global memory monitor which runs continuously
  *
- * @param {number} intervalSeconds - How often to take snapshots (default: 60 seconds)
  * @returns {Object} Memory tracking data and controls
  */
-function useMemoryTracking(intervalSeconds = 60) {
+function useMemoryTracking() {
   const [, forceUpdate] = useState({})
   const monitorRef = useRef(null)
-  const intervalRef = useRef(null)
 
   useEffect(() => {
-    // Get the global memory monitor instance
+    // Get the global memory monitor instance (already running)
     monitorRef.current = getGlobalMemoryMonitor()
-
-    // Take initial snapshot
-    monitorRef.current.takeSnapshot()
 
     // Subscribe to updates
     const unsubscribe = monitorRef.current.subscribe(() => {
@@ -26,19 +21,11 @@ function useMemoryTracking(intervalSeconds = 60) {
       forceUpdate({})
     })
 
-    // Set up automatic snapshot interval
-    intervalRef.current = setInterval(() => {
-      monitorRef.current.takeSnapshot()
-    }, intervalSeconds * 1000)
-
-    // Cleanup
+    // Cleanup - just unsubscribe, don't stop monitoring
     return () => {
       unsubscribe()
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-      }
     }
-  }, [intervalSeconds])
+  }, [])
 
   // Return current state and controls
   return {

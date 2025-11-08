@@ -12,12 +12,16 @@ class MemoryMonitor {
     this.intervalTimerCount = 0
     this.timeoutTimerCount = 0
     this.startTime = Date.now()
+    this.snapshotInterval = null
 
     // Monkey-patch addEventListener/removeEventListener to track counts
     this.setupEventListenerTracking()
 
     // Monkey-patch setInterval/setTimeout to track counts
     this.setupTimerTracking()
+
+    // Start automatic snapshot collection
+    this.startMonitoring()
   }
 
   setupEventListenerTracking() {
@@ -275,11 +279,41 @@ class MemoryMonitor {
   }
 
   /**
+   * Start automatic snapshot collection
+   */
+  startMonitoring(intervalSeconds = 60) {
+    // Don't start if already running
+    if (this.snapshotInterval) {
+      return
+    }
+
+    // Take initial snapshot
+    this.takeSnapshot()
+
+    // Start interval
+    this.snapshotInterval = setInterval(() => {
+      this.takeSnapshot()
+    }, intervalSeconds * 1000)
+  }
+
+  /**
+   * Stop automatic snapshot collection
+   */
+  stopMonitoring() {
+    if (this.snapshotInterval) {
+      clearInterval(this.snapshotInterval)
+      this.snapshotInterval = null
+    }
+  }
+
+  /**
    * Clear all snapshots and reset counters
    */
   reset() {
     this.snapshots = []
     this.startTime = Date.now()
+    this.stopMonitoring()
+    this.startMonitoring()
     this.notifyListeners()
   }
 }
