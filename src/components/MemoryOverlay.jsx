@@ -1,4 +1,4 @@
-import { useRef, useEffect, useMemo } from 'react'
+import { useRef, useEffect } from 'react'
 import useMemoryTracking from '../hooks/useMemoryTracking'
 
 function MemoryOverlay({ onClose }) {
@@ -24,13 +24,6 @@ function MemoryOverlay({ onClose }) {
   // Auto-scroll to bottom when new data arrives
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [snapshots])
-
-  // Memoize recent snapshots to prevent recreating DOM elements on every render
-  // Limit to last 15 to reduce memory and improve performance
-  const recentSnapshots = useMemo(() => {
-    const MAX_DISPLAY_SNAPSHOTS = 15
-    return snapshots.slice(-MAX_DISPLAY_SNAPSHOTS).reverse()
   }, [snapshots])
 
   const formatUptime = (ms) => {
@@ -218,6 +211,65 @@ function MemoryOverlay({ onClose }) {
           </div>
         </div>
 
+        {/* Memory Statistics */}
+        <div
+          style={{
+            padding: '20px',
+            backgroundColor: '#222',
+            borderRadius: '8px',
+            marginBottom: '20px'
+          }}
+        >
+          <h3 style={{ marginTop: 0 }}>Memory Statistics</h3>
+          {snapshots.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', fontSize: '14px' }}>
+              {(() => {
+                const memoryValues = snapshots
+                  .filter(s => s.memory)
+                  .map(s => parseFloat(s.memory.usedMB))
+
+                if (memoryValues.length === 0) {
+                  return <div style={{ gridColumn: '1 / -1', color: '#888' }}>No memory data yet...</div>
+                }
+
+                const highest = Math.max(...memoryValues)
+                const lowest = Math.min(...memoryValues)
+                const average = memoryValues.reduce((a, b) => a + b, 0) / memoryValues.length
+
+                // Calculate median
+                const sorted = [...memoryValues].sort((a, b) => a - b)
+                const median = sorted.length % 2 === 0
+                  ? (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2
+                  : sorted[Math.floor(sorted.length / 2)]
+
+                const range = highest - lowest
+
+                return (
+                  <>
+                    <div>
+                      <strong>Highest:</strong> {highest.toFixed(2)} MB
+                    </div>
+                    <div>
+                      <strong>Lowest:</strong> {lowest.toFixed(2)} MB
+                    </div>
+                    <div>
+                      <strong>Average:</strong> {average.toFixed(2)} MB
+                    </div>
+                    <div>
+                      <strong>Median:</strong> {median.toFixed(2)} MB
+                    </div>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <strong>Range:</strong> {range.toFixed(2)} MB ({lowest.toFixed(2)} → {highest.toFixed(2)})
+                    </div>
+                  </>
+                )
+              })()}
+            </div>
+          ) : (
+            <div style={{ color: '#888', fontSize: '14px' }}>Collecting data...</div>
+          )}
+        </div>
+
         {/* Memory Trend Chart */}
         <div
           style={{
@@ -240,12 +292,12 @@ function MemoryOverlay({ onClose }) {
             marginBottom: '20px'
           }}
         >
-          <h3 style={{ marginTop: 0 }}>Snapshot History (Last 15)</h3>
+          <h3 style={{ marginTop: 0 }}>Snapshot History</h3>
           <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-            {recentSnapshots.length === 0 ? (
+            {snapshots.length === 0 ? (
               <div style={{ color: '#888' }}>No snapshots yet. Waiting for data...</div>
             ) : (
-              recentSnapshots.map((snapshot) => {
+              snapshots.slice().reverse().map((snapshot) => {
                 const time = new Date(snapshot.timestamp).toLocaleTimeString()
                 return (
                   <div
