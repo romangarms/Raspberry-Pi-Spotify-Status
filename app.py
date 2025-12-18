@@ -122,7 +122,7 @@ def get_spotify_auth_manager():
     return SpotifyOAuth(
         scope=SPOTIFY_SCOPE,
         cache_handler=cache_handler,
-        show_dialog=False,
+        show_dialog=True,
     )
 
 def get_spotify_client():
