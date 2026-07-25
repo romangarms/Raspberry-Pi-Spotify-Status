@@ -12,7 +12,7 @@ from http.client import HTTPException
 
 from flask import Flask, session, request, redirect, render_template, send_from_directory, jsonify
 import spotipy
-from spotipy.oauth2 import SpotifyOAuth
+from spotipy.oauth2 import SpotifyOAuth, SpotifyOauthError
 
 # =============================================================================
 # CONFIGURATION
@@ -125,10 +125,24 @@ def get_spotify_auth_manager():
         show_dialog=True,
     )
 
+def get_valid_token(auth_manager):
+    """Return a valid cached token (refreshing if needed), or None to re-auth."""
+    cached_token = auth_manager.cache_handler.get_cached_token()
+    if not cached_token:
+        return None
+    try:
+        return auth_manager.validate_token(cached_token)
+    except SpotifyOauthError as e:
+        # Expired refresh token: discard it instead of retrying, then re-auth.
+        if getattr(e, "error", None) == "invalid_grant":
+            session.clear()
+            return None
+        raise
+
 def get_spotify_client():
     """Get an authenticated Spotify client or None if not authenticated."""
     auth_manager = get_spotify_auth_manager()
-    if not auth_manager.cache_handler.get_cached_token():
+    if not get_valid_token(auth_manager):
         return None
     return spotipy.Spotify(auth_manager=auth_manager)
 
@@ -185,7 +199,7 @@ def index():
         return redirect("/")
     
     # Check authentication status
-    if not auth_manager.cache_handler.get_cached_token():
+    if not get_valid_token(auth_manager):
         auth_url = auth_manager.get_authorize_url()
         return render_template("login.html", auth_url=auth_url)
     
